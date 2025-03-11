@@ -1,0 +1,284 @@
+import { Category, FoodItem, Order, Seller } from '../types/models';
+import apiClient from './client';
+
+export const sellerApi = {
+  /**
+   * Get seller profile
+   */
+  getProfile: async (): Promise<Seller> => {
+    try {
+      const response = await apiClient.get<Seller>('/api/seller/profile');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching seller profile:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Update seller profile
+   */
+  updateProfile: async (data: Partial<Seller>): Promise<Seller> => {
+    try {
+      const response = await apiClient.put<Seller>('/api/seller/profile', data);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating seller profile:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Update seller status (open/closed)
+   */
+  updateStatus: async (status: { status: 'open' | 'closed' }): Promise<Seller> => {
+    try {
+      const response = await apiClient.put<Seller>('/api/seller/status', status);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating seller status:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get all categories for a seller
+   */
+  getCategories: async (): Promise<Category[]> => {
+    try {
+      const response = await apiClient.get<Category[]>('/api/category/seller');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching seller categories:', error);
+      return [];
+    }
+  },
+
+  /**
+   * Create a new category
+   */
+  createCategory: async (name: string): Promise<Category> => {
+    try {
+      const response = await apiClient.post<Category>('/api/category', { name });
+      return response.data;
+    } catch (error) {
+      console.error('Error creating category:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Update a category
+   */
+  updateCategory: async (categoryId: string, name: string): Promise<Category> => {
+    try {
+      const response = await apiClient.put<Category>(`/api/category/${categoryId}`, { name });
+      return response.data;
+    } catch (error) {
+      console.error('Error updating category:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Delete a category
+   */
+  deleteCategory: async (categoryId: string): Promise<void> => {
+    try {
+      await apiClient.delete(`/api/category/${categoryId}`);
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get all food items for a seller
+   */
+  getFoodItems: async (): Promise<FoodItem[]> => {
+    try {
+      const response = await apiClient.get<FoodItem[]>('/api/food/seller');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching seller food items:', error);
+      return [];
+    }
+  },
+
+  /**
+   * Get food items by category
+   */
+  getFoodItemsByCategory: async (categoryId: string): Promise<FoodItem[]> => {
+    try {
+      const response = await apiClient.get<FoodItem[]>(`/api/food/category/${categoryId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching food items by category:', error);
+      return [];
+    }
+  },
+
+  /**
+   * Create a new food item
+   */
+  createFoodItem: async (foodItem: Omit<FoodItem, 'id' | 'createdAt' | 'updatedAt'>): Promise<FoodItem> => {
+    try {
+      const response = await apiClient.post<FoodItem>('/api/food', foodItem);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating food item:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Update a food item
+   */
+  updateFoodItem: async (foodItemId: string, data: Partial<FoodItem>): Promise<FoodItem> => {
+    try {
+      const response = await apiClient.put<FoodItem>(`/api/food/${foodItemId}`, data);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating food item:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Delete a food item
+   */
+  deleteFoodItem: async (foodItemId: string): Promise<void> => {
+    try {
+      await apiClient.delete(`/api/food/${foodItemId}`);
+    } catch (error) {
+      console.error('Error deleting food item:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get all orders for a seller
+   */
+  getOrders: async (): Promise<Order[]> => {
+    try {
+      // WORKAROUND: Using query parameter instead of path segment to avoid MongoDB ObjectId casting error
+      // Original endpoint '/api/seller/orders' causes "Cast to ObjectId failed for value 'orders'" error
+      // because the backend tries to interpret 'orders' as a MongoDB ObjectId
+      const response = await apiClient.get<Order[]>('/api/seller', { params: { view: 'orders' } });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching seller orders:', error);
+      return [];
+    }
+  },
+
+  /**
+   * Get order details
+   */
+  getOrderDetails: async (orderId: string): Promise<Order> => {
+    try {
+      const response = await apiClient.get<Order>(`/api/order/${orderId}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching order details for ${orderId}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Update order status
+   */
+  updateOrderStatus: async (
+    orderId: string, 
+    status: { status: 'pending' | 'preparing' | 'out for delivery' | 'delivered' }
+  ): Promise<Order> => {
+    try {
+      const response = await apiClient.put<Order>(`/api/seller/orders/${orderId}/status`, status);
+      return response.data;
+    } catch (error) {
+      console.error(`Error updating order status for ${orderId}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get all sellers
+   */
+  getAllSellers: async (): Promise<Seller[]> => {
+    try {
+      const response = await apiClient.get<Seller[]>('/api/seller');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching all sellers:', error);
+      return [];
+    }
+  },
+
+  /**
+   * Get seller dashboard stats
+   */
+  getDashboardStats: async (): Promise<any> => {
+    try {
+      // WORKAROUND: Using query parameter instead of path segment to avoid MongoDB ObjectId casting error
+      // Original endpoint '/api/seller/dashboard' causes "Cast to ObjectId failed for value 'dashboard'" error
+      // because the backend tries to interpret 'dashboard' as a MongoDB ObjectId
+      const response = await apiClient.get<any>('/api/seller', { params: { view: 'dashboard' } });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+      // Return error message about missing backend implementation
+      throw new Error("Seller dashboard API is not properly implemented in the backend. The endpoint is returning a 500 error. Please check miss.md for details.");
+    }
+  },
+
+  /**
+   * Get seller menu (categories and food items)
+   */
+  getMenu: async (sellerId: string): Promise<any> => {
+    try {
+      const response = await apiClient.get<any>(`/api/seller/${sellerId}/menu`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching menu for seller ${sellerId}:`, error);
+      return { categories: [], items: [] };
+    }
+  },
+
+  /**
+   * Get menu items for seller
+   */
+  getMenuItems: async (): Promise<FoodItem[]> => {
+    try {
+      const response = await apiClient.get<FoodItem[]>('/api/food/seller');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching menu items:', error);
+      return [];
+    }
+  },
+
+  /**
+   * Update menu item
+   */
+  updateMenuItem: async (itemId: string, data: Partial<FoodItem>): Promise<FoodItem> => {
+    try {
+      const response = await apiClient.put<FoodItem>(`/api/food/${itemId}`, data);
+      return response.data;
+    } catch (error) {
+      console.error(`Error updating menu item ${itemId}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Delete menu item
+   */
+  deleteMenuItem: async (itemId: string): Promise<void> => {
+    try {
+      await apiClient.delete(`/api/food/${itemId}`);
+    } catch (error) {
+      console.error(`Error deleting menu item ${itemId}:`, error);
+      throw error;
+    }
+  }
+}; 

@@ -1,101 +1,246 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import React from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
+import { foodApi } from '@/lib/api';
+import { MainLayout } from '@/components/layouts';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Seller } from '@/lib/types/models';
+
+export default function HomePage() {
+  // Fetch featured sellers
+  const { data: sellers = [], isLoading, isError } = useQuery({
+    queryKey: ['sellers'],
+    queryFn: () => foodApi.getSellers(),
+    // Add retry and stale time options to improve error handling
+    retry: 1,
+    staleTime: 60000, // 1 minute
+  });
+
+  // Take only the first 4 sellers for the featured section
+  const featuredSellers = sellers.slice(0, 4);
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <MainLayout>
+      {/* Hero Section */}
+      <section className="bg-gradient-to-r from-secondary to-secondary-light py-20">
+        <div className="container mx-auto px-4 flex flex-col md:flex-row items-center">
+          <div className="md:w-1/2 mb-10 md:mb-0">
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+              Delicious Home-Cooked Meals Delivered to Your Door
+            </h1>
+            <p className="text-lg text-gray-600 mb-8">
+              Support local home chefs and enjoy authentic, freshly prepared food from the comfort of your home.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Button size="lg" asChild>
+                <Link href="/sellers">Order Now</Link>
+              </Button>
+              <Button size="lg" variant="outline" asChild>
+                <Link href="/register?userType=seller">Become a Seller</Link>
+              </Button>
+            </div>
+          </div>
+          <div className="md:w-1/2 relative">
+            <div className="relative h-[400px] w-full rounded-xl overflow-hidden shadow-xl">
+              <Image
+                src="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
+                alt="Delicious home-cooked food"
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                style={{ objectFit: 'cover' }}
+                priority
+              />
+            </div>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section className="py-16 bg-white">
+        <div className="container mx-auto px-4">
+          <h2 className="section-title">How It Works</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="text-center">
+              <div className="bg-secondary rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                <span className="text-primary text-2xl font-bold">1</span>
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Browse Sellers</h3>
+              <p className="text-gray-600">
+                Explore a variety of home chefs in your area and their unique menus.
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="bg-secondary rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                <span className="text-primary text-2xl font-bold">2</span>
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Place Your Order</h3>
+              <p className="text-gray-600">
+                Select your favorite dishes and place your order with just a few clicks.
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="bg-secondary rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                <span className="text-primary text-2xl font-bold">3</span>
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Enjoy Your Meal</h3>
+              <p className="text-gray-600">
+                Receive your freshly prepared meal delivered right to your doorstep.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Sellers Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <h2 className="section-title">Featured Sellers</h2>
+          {isLoading ? (
+            <div className="flex justify-center items-center h-40">
+              <p>Loading sellers...</p>
+            </div>
+          ) : isError ? (
+            <div className="flex justify-center items-center h-40">
+              <p>Unable to load sellers. Please try again later.</p>
+            </div>
+          ) : featuredSellers.length === 0 ? (
+            <div className="flex justify-center items-center h-40">
+              <p>No sellers available at the moment. Check back soon!</p>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {featuredSellers.map((seller: Seller) => (
+                  <Card key={seller.id} className="hover:shadow-lg transition-shadow duration-300">
+                    <CardHeader className="pb-2">
+                      <CardTitle>{seller.name}</CardTitle>
+                      <CardDescription>{seller.address}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center mb-2">
+                        <div className={`w-3 h-3 rounded-full mr-2 ${seller.status === 'open' ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                        <span className="text-sm">{seller.status === 'open' ? 'Open' : 'Closed'}</span>
+                      </div>
+                      {seller.rating && (
+                        <div className="flex items-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-500" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                          <span className="ml-1 text-sm">{seller.rating.toFixed(1)}</span>
+                        </div>
+                      )}
+                    </CardContent>
+                    <CardFooter>
+                      <Button asChild className="w-full">
+                        <Link href={`/sellers/${seller.id}`}>View Menu</Link>
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+              <div className="mt-10 text-center">
+                <Button variant="outline" size="lg" asChild>
+                  <Link href="/sellers">View All Sellers</Link>
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="py-16 bg-white">
+        <div className="container mx-auto px-4">
+          <h2 className="section-title">What Our Customers Say</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <Card className="bg-secondary/30">
+              <CardContent className="pt-6">
+                <div className="flex items-center mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <svg key={i} xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-500" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  ))}
+                </div>
+                <p className="text-gray-700 mb-4">
+                  "The food from Homely is amazing! It's like having a personal chef. The flavors are authentic and the delivery is always on time."
+                </p>
+                <div className="flex items-center">
+                  <div className="w-10 h-10 bg-gray-300 rounded-full mr-3"></div>
+                  <div>
+                    <p className="font-semibold">Sarah Johnson</p>
+                    <p className="text-sm text-gray-500">Regular Customer</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-secondary/30">
+              <CardContent className="pt-6">
+                <div className="flex items-center mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <svg key={i} xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-500" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  ))}
+                </div>
+                <p className="text-gray-700 mb-4">
+                  "I love supporting local home chefs through Homely. The variety of cuisines available is impressive and the quality is consistently excellent."
+                </p>
+                <div className="flex items-center">
+                  <div className="w-10 h-10 bg-gray-300 rounded-full mr-3"></div>
+                  <div>
+                    <p className="font-semibold">Michael Chen</p>
+                    <p className="text-sm text-gray-500">Foodie Enthusiast</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-secondary/30">
+              <CardContent className="pt-6">
+                <div className="flex items-center mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <svg key={i} xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-500" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  ))}
+                </div>
+                <p className="text-gray-700 mb-4">
+                  "As someone with dietary restrictions, I appreciate how Homely makes it easy to find suitable options. The food is delicious and the service is excellent."
+                </p>
+                <div className="flex items-center">
+                  <div className="w-10 h-10 bg-gray-300 rounded-full mr-3"></div>
+                  <div>
+                    <p className="font-semibold">Emily Rodriguez</p>
+                    <p className="text-sm text-gray-500">Health-Conscious Diner</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-16 bg-primary text-white">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold mb-4">Ready to Experience Homely?</h2>
+          <p className="text-lg mb-8 max-w-2xl mx-auto">
+            Join thousands of satisfied customers enjoying delicious home-cooked meals delivered to their doorstep.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button size="lg" variant="secondary" className="text-primary" asChild>
+              <Link href="/register">Sign Up Now</Link>
+            </Button>
+            <Button size="lg" variant="outline" className="bg-transparent border-white text-white hover:bg-white hover:text-primary" asChild>
+              <Link href="/sellers">Browse Sellers</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+    </MainLayout>
   );
-}
+} 

@@ -6,7 +6,8 @@ const nextConfig = {
       'source.unsplash.com',
       'images.unsplash.com',
       'localhost',
-      'res.cloudinary.com'
+      'res.cloudinary.com',
+      't3.ftcdn.net' // Added this line
     ],
   },
   experimental: {

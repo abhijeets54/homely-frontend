@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -13,10 +13,12 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Icons } from '@/components/ui/icons';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
+import { sellerApi } from '../../lib/api/seller'; // Adjust the import path as necessary
 
 interface MenuManagerProps {
   items: any[]; // TODO: Type this properly when backend is ready
   isLoading?: boolean;
+  sellerId?: string; // Added sellerId to props
 }
 
 interface FoodItem {
@@ -31,7 +33,7 @@ interface FoodItem {
   image_url: string;
 }
 
-export function MenuManager({ items = [], isLoading }: MenuManagerProps) {
+export function MenuManager({ items = [], isLoading, sellerId }: MenuManagerProps) {
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [editingItem, setEditingItem] = useState<FoodItem | null>(null);
   const { toast } = useToast();
@@ -101,6 +103,19 @@ export function MenuManager({ items = [], isLoading }: MenuManagerProps) {
       await addItemMutation.mutateAsync(item);
     }
   };
+
+  const fetchCategories = async () => {
+    if (sellerId) {
+      const categories = await sellerApi.getCategories(sellerId);
+      // Handle categories as needed
+    } else {
+      console.error('Seller ID is missing!');
+    }
+  };
+
+  useEffect(() => {
+    fetchCategories();
+  }, [sellerId]);
 
   if (isLoading) {
     return <LoadingSpinner />;
@@ -338,4 +353,4 @@ export function MenuManager({ items = [], isLoading }: MenuManagerProps) {
       )}
     </div>
   );
-} 
+}

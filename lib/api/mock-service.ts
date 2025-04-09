@@ -417,16 +417,14 @@ export const mockSellerApi = {
   },
   
   createCategory: async (data: Partial<Category>): Promise<Category> => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // Create new category
+    await new Promise(resolve => setTimeout(resolve, 500)); // simulate delay
+  
     const newCategory: Category = {
       id: `cat-${Date.now()}`,
       name: data.name || 'New Category',
-      restaurantId: mockSellers[0].id
+      restaurantId: mockSellers[0].id,
     };
-    
+  
     mockCategories.push(newCategory);
     return newCategory;
   },

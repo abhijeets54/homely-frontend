@@ -1,4 +1,3 @@
-// User Types
 export interface User {
   id: string;
   name: string;
@@ -16,6 +15,8 @@ export interface Customer extends User {
 export interface Seller extends User {
   status: 'open' | 'closed';
   rating?: number;
+  _id?: string; // Add _id property
+  image?: string; // Add image property
 }
 
 // Menu Types
@@ -175,4 +176,4 @@ export interface PaginatedResponse<T> {
 export interface ErrorResponse {
   message: string;
   error?: any;
-} 
+}

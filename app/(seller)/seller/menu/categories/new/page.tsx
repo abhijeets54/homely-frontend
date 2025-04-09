@@ -14,11 +14,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuthContext } from '@/providers/auth-provider';
+import { useAuth } from '@/providers/auth-provider';
 
 export default function NewCategoryPage() {
   const router = useRouter();
-  const { isAuthenticated, isLoading: authLoading } = useAuthContext();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   
   // Form setup
   const form = useForm<CategoryFormValues>({

@@ -3,7 +3,7 @@ export type UserRole = 'customer' | 'seller' | 'delivery' | 'admin';
 
 // Base user interface
 export interface User {
-  id: string;
+  _id: string;
   name: string;
   email: string;
   phoneNumber?: string; // Frontend uses phoneNumber
@@ -49,6 +49,7 @@ export interface UpdateProfileData {
 export interface AuthResponse {
   token: string;
   user: User;
+  userType: UserRole; // Add userType to the response
   message?: string;
 }
 

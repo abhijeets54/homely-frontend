@@ -8,6 +8,7 @@ export const foodApi = {
   getSellers: async (): Promise<Seller[]> => {
     try {
       const response = await apiClient.get<Seller[]>('/api/seller');
+      console.log('Fetched sellers:', response.data); // Log the response data
       return response.data;
     } catch (error) {
       console.error('Error fetching sellers:', error);
@@ -20,12 +21,17 @@ export const foodApi = {
    * Get seller by ID
    */
   getSellerById: async (sellerId: string): Promise<Seller> => {
+    if (!sellerId) {
+      console.error('Seller ID is undefined');
+      throw new Error('Seller ID is required');
+    }
+
     try {
-      const response = await apiClient.get<Seller>(`/api/seller/${sellerId}`);
+      const response = await apiClient.get(`http://localhost:5000/api/seller/${sellerId}`);
       return response.data;
     } catch (error) {
-      console.error(`Error fetching seller ${sellerId}:`, error);
-      throw error;
+      console.error('Error fetching seller:', error);
+      throw new Error('Error fetching seller data');
     }
   },
 

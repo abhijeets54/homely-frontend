@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuthContext } from '@/providers/auth-provider';
+import { useAuth } from '@/providers/auth-provider';
 
 interface EditCategoryPageProps {
   params: {
@@ -25,7 +25,7 @@ interface EditCategoryPageProps {
 export default function EditCategoryPage({ params }: EditCategoryPageProps) {
   const { categoryId } = params;
   const router = useRouter();
-  const { isAuthenticated, isLoading: authLoading } = useAuthContext();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   
   // Fetch category
   const { 
@@ -44,7 +44,7 @@ export default function EditCategoryPage({ params }: EditCategoryPageProps) {
     isLoading: menuItemsLoading 
   } = useQuery({
     queryKey: ['menu-items-by-category', categoryId],
-    queryFn: () => sellerApi.getFoodItemsByCategoryId(categoryId),
+    queryFn: () => sellerApi.getFoodItemsByCategory(categoryId),
     enabled: isAuthenticated && !!categoryId,
   });
 

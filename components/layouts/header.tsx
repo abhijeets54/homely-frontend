@@ -42,6 +42,9 @@ export function Header() {
     return pathname === path;
   };
 
+  // Log user role
+  // console.log('User role:', role);
+
   // Don't render anything until mounted to avoid hydration mismatch
   if (!mounted) {
     return null;
@@ -218,4 +221,4 @@ export function Header() {
       </div>
     </header>
   );
-} 
+}

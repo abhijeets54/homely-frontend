@@ -67,11 +67,15 @@ export const authApi = {
   // Login user
   async login(data: LoginData): Promise<AuthResponse> {
     try {
+      console.log('Login payload:', data); // Log the payload for debugging
       const response = await client.post('/api/auth/login', {
         email: data.email,
         password: data.password,
         role: data.role
       });
+      
+      // Log the response for debugging
+      console.log('Login response:', response);
       
       // Store token in localStorage and cookies for persistence
       if (response.data.token) {
@@ -80,6 +84,7 @@ export const authApi = {
         Cookies.set('userType', data.role, { expires: 7, path: '/' });
       }
       
+      console.log('login response:', response);
       return response.data;
     } catch (error) {
       console.error('Login error:', error);
@@ -119,6 +124,7 @@ export const authApi = {
   async getCurrentUser(): Promise<AuthResponse> {
     try {
       const response = await client.get('/api/auth/me');
+      console.log('getCurrentUser response:', response);
       return response.data;
     } catch (error) {
       console.error('Get current user error:', error);
@@ -182,4 +188,4 @@ export const authApi = {
   }
 };
 
-export default authApi; 
+export default authApi;

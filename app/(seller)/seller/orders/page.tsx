@@ -32,30 +32,34 @@ const orderStatuses = [
 ];
 
 export default function OrderManagementPage() {
+  const { sellerId } = useParams(); // Assuming sellerId is passed as a route parameter
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  if (!sellerId) {
+    console.error('Seller ID is undefined');
+    toast({
+      title: 'Error',
+      description: 'Seller ID is required to fetch orders.',
+      variant: 'destructive',
+    });
+    return null; // Return null if sellerId is not available
+  }
+
   // Fetch orders
   const { data: orders = [], isLoading } = useQuery<Order[]>({
-    queryKey: ['orders', selectedStatus],
+    queryKey: ['orders', sellerId, selectedStatus],
     queryFn: async () => {
-      // TODO: Implement API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      return [];
+      const response = await apiClient.get<Order[]>(`/api/seller/${sellerId}/orders`);
+      return response.data;
     },
   });
 
   // Update order status mutation
   const { mutate: updateOrderStatus } = useMutation({
-    mutationFn: async ({
-      orderId,
-      status,
-    }: {
-      orderId: string;
-      status: string;
-    }) => {
+    mutationFn: async ({ orderId, status }: { orderId: string; status: string }) => {
       // TODO: Implement API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
     },
@@ -277,4 +281,4 @@ export default function OrderManagementPage() {
       </div>
     </DashboardLayout>
   );
-} 
+}

@@ -26,30 +26,36 @@ interface EditFoodItemPageProps {
   };
 }
 
-export default function EditFoodItemPage({ params }: EditFoodItemPageProps) {
+export default function EditFoodItemPage({ params }: { params: { itemId: string } }) {
   const { itemId } = params;
   const router = useRouter();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
-  
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
+  const sellerId = user?._id;
+
+
+  console.log('Seller ID:', sellerId);
+  console.log('user._id:', user?._id);
+  console.log('Item ID:', itemId);
+
   // Fetch food item
-  const { 
-    data: foodItem, 
+  const {
+    data: foodItem,
     isLoading: foodItemLoading,
     error: foodItemError
   } = useQuery({
     queryKey: ['food-item', itemId],
-    queryFn: () => sellerApi.getMenuItemById(itemId),
+    queryFn: () => sellerApi.getMenuItems(itemId),
     enabled: isAuthenticated && !!itemId,
   });
 
   // Fetch categories
-  const { 
-    data: categories = [], 
-    isLoading: categoriesLoading 
+  const {
+    data: categories = [],
+    isLoading: categoriesLoading
   } = useQuery({
-    queryKey: ['seller-categories'],
-    queryFn: () => sellerApi.getCategories(),
-    enabled: isAuthenticated,
+    queryKey: ['seller-categories', sellerId],
+    queryFn: () => sellerId ? sellerApi.getCategories(sellerId) : Promise.resolve([]),
+    enabled: isAuthenticated && !!user?._id,
   });
 
   // Form setup
@@ -69,27 +75,35 @@ export default function EditFoodItemPage({ params }: EditFoodItemPageProps) {
 
   // Update form values when food item data is loaded
   useEffect(() => {
-    if (foodItem) {
+    if (foodItem && foodItem.length > 0) {
+      const firstFoodItem = foodItem[0];
       form.reset({
-        name: foodItem.name,
-        description: foodItem.description || '',
-        price: foodItem.price,
-        categoryId: foodItem.categoryId,
-        imageUrl: foodItem.imageUrl || '',
-        isAvailable: foodItem.isAvailable,
-        stock: foodItem.stock,
-        dietaryInfo: foodItem.dietaryInfo ? 
-          (typeof foodItem.dietaryInfo === 'string' ? 
-            foodItem.dietaryInfo.split(',') : 
-            foodItem.dietaryInfo) : 
-          [],
+        name: firstFoodItem.name,
+        description: firstFoodItem.description || '',
+        price: firstFoodItem.price,
+        categoryId: firstFoodItem.categoryId,
+        imageUrl: firstFoodItem.imageUrl || '',
+        isAvailable: firstFoodItem.isAvailable,
+        stock: firstFoodItem.stock,
+        dietaryInfo: Array.isArray(firstFoodItem.dietaryInfo)
+          ? firstFoodItem.dietaryInfo // Use the array as-is
+          : firstFoodItem.dietaryInfo
+            ? firstFoodItem.dietaryInfo.split(',') // Convert string to array
+            : [], // Fallback to an empty array
       });
     }
   }, [foodItem, form]);
 
   // Update food item mutation
   const updateFoodItemMutation = useMutation({
-    mutationFn: (data: FoodItemFormValues) => sellerApi.updateMenuItem(itemId, data),
+    mutationFn: (data: FoodItemFormValues) => {
+      // Convert dietaryInfo array to a comma-separated string
+      const formattedData = {
+        ...data,
+        dietaryInfo: Array.isArray(data.dietaryInfo) ? data.dietaryInfo.join(',') : data.dietaryInfo,
+      };
+      return sellerApi.updateMenuItem(itemId, formattedData);
+    },
     onSuccess: () => {
       toast.success('Food item updated successfully');
       router.push('/seller/menu');
@@ -318,9 +332,9 @@ export default function EditFoodItemPage({ params }: EditFoodItemPageProps) {
                 </CardContent>
                 <CardFooter className="flex justify-between">
                   <div>
-                    <Button 
-                      variant="destructive" 
-                      type="button" 
+                    <Button
+                      variant="destructive"
+                      type="button"
                       onClick={handleDelete}
                       disabled={deleteFoodItemMutation.isPending}
                     >
@@ -331,8 +345,8 @@ export default function EditFoodItemPage({ params }: EditFoodItemPageProps) {
                     <Button variant="outline" type="button" asChild>
                       <Link href="/seller/menu">Cancel</Link>
                     </Button>
-                    <Button 
-                      type="submit" 
+                    <Button
+                      type="submit"
                       disabled={updateFoodItemMutation.isPending || !form.formState.isDirty}
                     >
                       {updateFoodItemMutation.isPending ? 'Saving...' : 'Save Changes'}

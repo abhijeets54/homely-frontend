@@ -44,22 +44,37 @@ export const sellerApi = {
   /**
    * Get all categories for a seller
    */
-  getCategories: async (): Promise<Category[]> => {
+  getCategories: async (sellerId: string): Promise<Category[]> => {
     try {
-      const response = await apiClient.get<Category[]>('/api/category/seller');
-      return response.data;
+      const response = await apiClient.get<Category[]>(`/api/category/seller/${sellerId}`);
+  
+      return response.data.map((cat) => ({
+        ...cat,
+        id: (cat as any)._id, // Map _id to id
+      }));
     } catch (error) {
       console.error('Error fetching seller categories:', error);
       return [];
+    }
+  },
+  
+  //Get Category by ID
+  getCategoryById: async (categoryId: string): Promise<Category> => {
+    try {
+      const response = await apiClient.get<Category>(`/api/category/${categoryId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching category by ID:', error);
+      throw error;
     }
   },
 
   /**
    * Create a new category
    */
-  createCategory: async (name: string): Promise<Category> => {
+  createCategory: async (data: { name: string }): Promise<Category> => {
     try {
-      const response = await apiClient.post<Category>('/api/category', { name });
+      const response = await apiClient.post<Category>('/api/category', data);
       return response.data;
     } catch (error) {
       console.error('Error creating category:', error);
@@ -70,7 +85,7 @@ export const sellerApi = {
   /**
    * Update a category
    */
-  updateCategory: async (categoryId: string, name: string): Promise<Category> => {
+  updateCategory: async (categoryId: string, data: { name: string }): Promise<Category> => {
     try {
       const response = await apiClient.put<Category>(`/api/category/${categoryId}`, { name });
       return response.data;
@@ -95,9 +110,9 @@ export const sellerApi = {
   /**
    * Get all food items for a seller
    */
-  getFoodItems: async (): Promise<FoodItem[]> => {
+  getFoodItems: async (sellerId: string): Promise<FoodItem[]> => {
     try {
-      const response = await apiClient.get<FoodItem[]>('/api/food/seller');
+      const response = await apiClient.get<FoodItem[]>('/api/food', { params: { sellerId } });
       return response.data;
     } catch (error) {
       console.error('Error fetching seller food items:', error);
@@ -161,9 +176,6 @@ export const sellerApi = {
    */
   getOrders: async (): Promise<Order[]> => {
     try {
-      // WORKAROUND: Using query parameter instead of path segment to avoid MongoDB ObjectId casting error
-      // Original endpoint '/api/seller/orders' causes "Cast to ObjectId failed for value 'orders'" error
-      // because the backend tries to interpret 'orders' as a MongoDB ObjectId
       const response = await apiClient.get<Order[]>('/api/seller', { params: { view: 'orders' } });
       return response.data;
     } catch (error) {
@@ -247,12 +259,16 @@ export const sellerApi = {
   /**
    * Get menu items for seller
    */
-  getMenuItems: async (): Promise<FoodItem[]> => {
+  getMenuItems: async (sellerId: string): Promise<FoodItem[]> => {
+    if (!sellerId) {
+      console.error('Seller ID is missing!');
+      return [];
+    }
     try {
-      const response = await apiClient.get<FoodItem[]>('/api/food/seller');
+      const response = await apiClient.get<FoodItem[]>(`/api/food/${sellerId}/menu`);
       return response.data;
-    } catch (error) {
-      console.error('Error fetching menu items:', error);
+    } catch (error: any) {
+      console.error('Error fetching menu items:', error.response?.data || error.message);
       return [];
     }
   },

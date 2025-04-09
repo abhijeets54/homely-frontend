@@ -30,12 +30,14 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
 
   const defaultRole = (searchParams.get('userType') as UserRole) || 'customer';
+  // console.log('Default role:', defaultRole); // Ensure this is 'seller' when needed
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     watch,
+    setValue,
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -44,8 +46,13 @@ export function LoginForm() {
   });
 
   const selectedRole = watch('role');
+  // console.log('Selected role:', selectedRole); // Log the selected role
 
   const onSubmit = async (data: LoginFormData) => {
+    console.log('Current form errors:', errors); // Log current form errors // Log the form state before submission
+    console.log('Form state:', { errors, isLoading }); // Log the entire form state
+    console.log('Form submitted with data:', data); // Log the submitted data
+    console.log('Selected role:', selectedRole); // Log the selected role
     try {
       setIsLoading(true);
       
@@ -70,18 +77,18 @@ export function LoginForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form 
+      onSubmit={handleSubmit(onSubmit)} 
+      className="space-y-4"
+       // Log when the form is clicked
+    >
       <RadioGroup
-        defaultValue={defaultRole}
+        value={selectedRole} // Bind the selected role
+        onValueChange={(value) => setValue('role', value as UserRole)} // Explicitly cast the value
         className="grid grid-cols-3 gap-4 mb-4"
-        {...register('role')}
       >
         <div>
-          <RadioGroupItem
-            value="customer"
-            id="customer"
-            className="peer sr-only"
-          />
+          <RadioGroupItem value="customer" id="customer" className="peer sr-only" />
           <Label
             htmlFor="customer"
             className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-transparent p-4 hover:bg-muted peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
@@ -90,11 +97,7 @@ export function LoginForm() {
           </Label>
         </div>
         <div>
-          <RadioGroupItem
-            value="seller"
-            id="seller"
-            className="peer sr-only"
-          />
+          <RadioGroupItem value="seller" id="seller" className="peer sr-only" />
           <Label
             htmlFor="seller"
             className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-transparent p-4 hover:bg-muted peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
@@ -103,11 +106,7 @@ export function LoginForm() {
           </Label>
         </div>
         <div>
-          <RadioGroupItem
-            value="delivery"
-            id="delivery"
-            className="peer sr-only"
-          />
+          <RadioGroupItem value="delivery" id="delivery" className="peer sr-only" />
           <Label
             htmlFor="delivery"
             className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-transparent p-4 hover:bg-muted peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
@@ -149,7 +148,7 @@ export function LoginForm() {
         )}
       </div>
 
-      <Button className="w-full" type="submit" disabled={isLoading}>
+      <Button className="w-full" type="submit" disabled={isLoading} onClick={() => console.log('Button clicked, disabled state:', isLoading)}>
         {isLoading ? (
           <>
             <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
@@ -161,4 +160,4 @@ export function LoginForm() {
       </Button>
     </form>
   );
-} 
+}

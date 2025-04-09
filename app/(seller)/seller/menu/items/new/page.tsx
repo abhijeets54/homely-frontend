@@ -22,16 +22,18 @@ import { useAuth } from '@/providers/auth-provider';
 
 export default function NewFoodItemPage() {
   const router = useRouter();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
+  const sellerId = user?._id;
   
+  console.log('Seller ID:', sellerId);
   // Fetch categories
   const { 
     data: categories = [], 
     isLoading: categoriesLoading 
   } = useQuery({
-    queryKey: ['seller-categories'],
-    queryFn: () => sellerApi.getCategories(),
-    enabled: isAuthenticated,
+    queryKey: ['seller-categories', sellerId],
+    queryFn: () => sellerId ? sellerApi.getCategories(sellerId) : Promise.resolve([]),
+    enabled: isAuthenticated && !!user?._id,
   });
 
   // Form setup
@@ -49,9 +51,19 @@ export default function NewFoodItemPage() {
     },
   });
 
+  type CreateFoodItemInput = FoodItemFormValues & {
+    restaurantId: string;
+  };
+
   // Create food item mutation
   const createFoodItemMutation = useMutation({
-    mutationFn: (data: FoodItemFormValues) => sellerApi.createMenuItem(data),
+    mutationFn: (data: CreateFoodItemInput) => {
+      const transformedData = {
+        ...data,
+        dietaryInfo: data.dietaryInfo.join(','), // Convert array to comma-separated string
+      };
+      return sellerApi.createFoodItem(transformedData);
+    },
     onSuccess: () => {
       toast.success('Food item created successfully');
       router.push('/seller/menu');
@@ -64,7 +76,15 @@ export default function NewFoodItemPage() {
 
   // Handle form submission
   const handleSubmit = (values: FoodItemFormValues) => {
-    createFoodItemMutation.mutate(values);
+    if (!sellerId) {
+      toast.error('Seller ID is missing. Please log in again.');
+      return;
+    }
+  
+    createFoodItemMutation.mutate({
+      ...values,
+      restaurantId: sellerId,
+    });
   };
 
   // Loading state

@@ -4,27 +4,34 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useQuery } from '@tanstack/react-query';
-import { foodApi } from '@/lib/api';
-import { MainLayout } from '@/components/layouts';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { formatPrice } from '@/lib/utils/format';
-import { useCartContext } from '@/components/providers/cart-provider';
-import { useAuthContext } from '@/providers/auth-provider';
+import { foodApi } from '../../../lib/api';
+import { MainLayout } from '../../../components/layouts';
+import { Button } from '../../../components/ui/button';
+import { Card, CardContent } from '../../../components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui/tabs';
+import { Badge } from '../../../components/ui/badge';
+import { formatPrice } from '../../../lib/utils/format';
+import { useCart } from '../../../components/providers/cart-provider';
+import { useAuth } from '../../../providers/auth-provider'; // Corrected import
 import { toast } from 'sonner';
 
 interface SellerDetailPageProps {
   params: {
-    sellerId: string;
+    sellerId: string; // Ensure sellerId is always a string
   };
 }
 
 export default function SellerDetailPage({ params }: SellerDetailPageProps) {
-  const { sellerId } = params;
-  const { isAuthenticated } = useAuthContext();
-  const { addToCart } = useCartContext();
+  const { sellerId } = React.use(params); // Unwrap params using React.use()
+
+  // Ensure sellerId is defined
+  if (!sellerId) {
+      console.error('Error: sellerId is undefined'); // Log the error without additional arguments
+      return null; // Prevent rendering if sellerId is not available
+  }
+
+  const { isAuthenticated } = useAuth(); // Use useAuth instead of useAuthContext
+  const { addToCart } = useCart();
   const [activeCategory, setActiveCategory] = useState<string>('all');
 
   // Fetch seller details
@@ -34,6 +41,8 @@ export default function SellerDetailPage({ params }: SellerDetailPageProps) {
   } = useQuery({
     queryKey: ['seller', sellerId],
     queryFn: () => foodApi.getSellerById(sellerId),
+    enabled: !!sellerId, // Ensure the query only runs if sellerId is defined
+    staleTime: 1000 * 60 * 5, // Optional: cache the result for 5 minutes
   });
 
   // Fetch seller's menu categories
@@ -42,7 +51,7 @@ export default function SellerDetailPage({ params }: SellerDetailPageProps) {
     isLoading: categoriesLoading 
   } = useQuery({
     queryKey: ['categories', sellerId],
-    queryFn: () => foodApi.getCategoriesBySellerId(sellerId),
+    queryFn: () => foodApi.getCategoriesBySeller(sellerId), // Corrected function name
   });
 
   // Fetch seller's menu items
@@ -51,7 +60,7 @@ export default function SellerDetailPage({ params }: SellerDetailPageProps) {
     isLoading: menuItemsLoading 
   } = useQuery({
     queryKey: ['menu-items', sellerId],
-    queryFn: () => foodApi.getFoodItemsBySellerId(sellerId),
+    queryFn: () => foodApi.getFoodItemsBySeller(sellerId), // Corrected function name
   });
 
   // Loading state
@@ -63,28 +72,45 @@ export default function SellerDetailPage({ params }: SellerDetailPageProps) {
     : menuItems.filter(item => item.categoryId === activeCategory);
 
   // Handle add to cart
-  const handleAddToCart = (item: any) => {
-    if (!isAuthenticated) {
-      toast.error('Please log in to add items to your cart');
-      return;
-    }
 
-    if (!item.isAvailable || item.stock <= 0) {
-      toast.error('This item is currently unavailable');
-      return;
-    }
+const handleAddToCart = (item: any) => {
+  if (!isAuthenticated) {
+    toast.error('Please log in to add items to your cart');
+    return;
+  }
 
-    addToCart({
-      id: item.id,
-      name: item.name,
-      price: item.price,
-      quantity: 1,
-      sellerId: sellerId,
-      sellerName: seller?.name || '',
-    });
+  if (!item.isAvailable || item.stock <= 0) {
+    toast.error('This item is currently unavailable');
+    return;
+  }
 
-    toast.success(`${item.name} added to cart`);
-  };
+  addToCart(item, 1); // Pass the item and quantity of 1
+
+  toast.success(`${item.name} added to cart`);
+};
+
+  // const handleAddToCart = (item: any) => {
+  //   if (!isAuthenticated) {
+  //     toast.error('Please log in to add items to your cart');
+  //     return;
+  //   }
+
+  //   if (!item.isAvailable || item.stock <= 0) {
+  //     toast.error('This item is currently unavailable');
+  //     return;
+  //   }
+
+  //   addToCart({
+  //     id: item.id,
+  //     name: item.name,
+  //     price: item.price,
+  //     quantity: 1,
+  //     sellerId: sellerId,
+  //     sellerName: seller?.name || '',
+  //   });
+
+  //   toast.success(`${item.name} added to cart`);
+  // };
 
   return (
     <MainLayout>
@@ -117,9 +143,9 @@ export default function SellerDetailPage({ params }: SellerDetailPageProps) {
                   </div>
                   <div className="flex items-center space-x-2">
                     {seller.status === 'open' ? (
-                      <Badge variant="success" className="bg-green-500">Open</Badge>
+                      <Badge variant="outline" className="bg-green-500">Open</Badge>
                     ) : (
-                      <Badge variant="secondary" className="bg-gray-500">Closed</Badge>
+                      <Badge variant="outline" className="bg-gray-500">Closed</Badge>
                     )}
                     {seller.rating && (
                       <div className="flex items-center bg-white/10 backdrop-blur-sm px-3 py-1 rounded-full">
@@ -217,7 +243,7 @@ export default function SellerDetailPage({ params }: SellerDetailPageProps) {
                             </div>
                           </CardContent>
                         </Card>
-                      ))}
+                      ))} 
                     </div>
                   )}
                 </TabsContent>
@@ -236,4 +262,4 @@ export default function SellerDetailPage({ params }: SellerDetailPageProps) {
       </div>
     </MainLayout>
   );
-} 
+}

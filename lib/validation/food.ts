@@ -38,10 +38,7 @@ export const foodItemSchema = z.object({
     .string()
     .min(10, { message: 'Description must be at least 10 characters' })
     .max(500, { message: 'Description must be less than 500 characters' }),
-  dietaryInfo: z
-    .string()
-    .max(200, { message: 'Dietary info must be less than 200 characters' })
-    .optional(),
+    dietaryInfo: z.array(z.string()),
 });
 
 export type FoodItemFormValues = z.infer<typeof foodItemSchema>; 

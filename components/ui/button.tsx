@@ -46,6 +46,11 @@ function Button({
   }) {
   const Comp = asChild ? Slot : "button"
 
+  // Prop validation
+  if (asChild && React.Children.count(props.children) !== 1) {
+    throw new Error("Button with 'asChild' prop must have exactly one child.");
+  }
+
   return (
     <Comp
       data-slot="button"

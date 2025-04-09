@@ -4,11 +4,11 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { foodApi } from '@/lib/api';
-import { MainLayout } from '@/components/layouts';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Seller } from '@/lib/types/models';
+import { foodApi } from '../lib/api';
+import { MainLayout } from '../components/layouts';
+import { Button } from '../components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
+import { Seller } from '../lib/types/models';
 
 export default function HomePage() {
   // Fetch featured sellers
@@ -114,8 +114,19 @@ export default function HomePage() {
           ) : (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {featuredSellers.map((seller: Seller) => (
-                  <Card key={seller.id} className="hover:shadow-lg transition-shadow duration-300">
+                {featuredSellers.map((seller: Seller, index) => (
+                  <Card key={seller.id || index} className="hover:shadow-lg transition-shadow duration-300">
+                    {/* Seller Image */}
+                    <div className="relative h-40 w-full rounded-t-lg overflow-hidden">
+                      {console.log('Seller image:', seller.image)} {/* Log the seller image */}
+                      <Image
+                        src={seller.image || '/placeholder-image.jpg'} // Use a placeholder if no image is available
+                        alt={seller.name}
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                        className="object-cover"
+                      />
+                    </div>
                     <CardHeader className="pb-2">
                       <CardTitle>{seller.name}</CardTitle>
                       <CardDescription>{seller.address}</CardDescription>
@@ -136,7 +147,7 @@ export default function HomePage() {
                     </CardContent>
                     <CardFooter>
                       <Button asChild className="w-full">
-                        <Link href={`/sellers/${seller.id}`}>View Menu</Link>
+                        <Link href={`/sellers/${seller._id}`}>View Menu</Link>
                       </Button>
                     </CardFooter>
                   </Card>
@@ -243,4 +254,5 @@ export default function HomePage() {
       </section>
     </MainLayout>
   );
-} 
+}
+

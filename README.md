@@ -208,4 +208,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [TailwindCSS](https://tailwindcss.com/)
 - [Shadcn UI](https://ui.shadcn.com/)
 - [Express.js](https://expressjs.com/)
-- [MongoDB](https://www.mongodb.com/) 
+- [MongoDB](https://www.mongodb.com/) #   h o m e l y - f r o n t e n d  
+ 

@@ -80,6 +80,9 @@ export const authApi = {
       // Store token in localStorage and cookies for persistence
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
+        localStorage.setItem('userType', data.role);
+        localStorage.setItem('user', JSON.stringify(response.data.user)); // ✅ Save user data
+      
         Cookies.set('token', response.data.token, { expires: 7, path: '/' });
         Cookies.set('userType', data.role, { expires: 7, path: '/' });
       }
@@ -109,6 +112,9 @@ export const authApi = {
       // Store token in localStorage and cookies for persistence
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
+        localStorage.setItem('userType', data.role);
+        localStorage.setItem('user', JSON.stringify(response.data.user)); // ✅ Save user data
+      
         Cookies.set('token', response.data.token, { expires: 7, path: '/' });
         Cookies.set('userType', data.role, { expires: 7, path: '/' });
       }

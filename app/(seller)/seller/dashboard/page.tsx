@@ -11,20 +11,40 @@ import { useAuth } from '@/providers/auth-provider';
 import { sellerApi } from '@/lib/api/seller'; // Updated to seller API
 import { formatPrice } from '@/lib/utils/format';
 import { ShoppingBag, Clock, CheckCircle, CreditCard } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export default function SellerDashboardPage() {
-  const { user, isAuthenticated } = useAuth();
-  
-  // Fetch dashboard stats
-  const { 
-    data: stats, 
+  const { user, role, isAuthenticated, isInitializing } = useAuth();
+  const router = useRouter();
+
+  // 🔒 Wait for auth to load
+  if (isInitializing) {
+    return (
+      <MainLayout>
+        <div className="flex justify-center items-center h-[60vh]">
+          <p className="text-lg">Loading...</p>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  // 🔐 Block unauthorized access
+  if (!isAuthenticated || role !== 'seller') {
+    router.push('/login?userType=seller');
+    return null;
+  }
+
+  // ✅ Fetch dashboard stats once authenticated
+  const {
+    data: stats,
     isLoading: statsLoading,
-    error: statsError
+    error: statsError,
   } = useQuery({
-    queryKey: ['seller', 'dashboard'], // Updated query key
-    queryFn: () => sellerApi.getDashboardStats(), // Updated to seller API
-    enabled: isAuthenticated,
+    queryKey: ['seller', 'dashboard'],
+    queryFn: () => sellerApi.getDashboardStats(),
+    enabled: isAuthenticated && role === 'seller',
   });
+
 
   if (!isAuthenticated) {
     return (

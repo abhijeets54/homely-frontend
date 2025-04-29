@@ -55,13 +55,26 @@ export default function SellerMenuPage() {
 
   const toggleAvailabilityMutation = useMutation({
     mutationFn: ({ itemId, isAvailable }: { itemId: string; isAvailable: boolean }) =>
-      sellerApi.updateMenuItem(itemId, { isAvailable }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['seller-food-items', user?._id] });
-      toast.success('Item availability updated');
+      sellerApi.updateMenuItemAvailability(itemId, isAvailable),
+    onMutate: async ({ itemId, isAvailable }) => {
+      await queryClient.cancelQueries(['seller-food-items', user?._id]);
+      const previousItems = queryClient.getQueryData<FoodItem[]>(['seller-food-items', user?._id]);
+      queryClient.setQueryData<FoodItem[]>(['seller-food-items', user?._id], (old) =>
+        old?.map((item) => (item.id === itemId ? { ...item, isAvailable } : item))
+      );
+      return { previousItems };
     },
-    onError: () => {
+    onError: (err, variables, context) => {
+      if (context?.previousItems) {
+        queryClient.setQueryData(['seller-food-items', user?._id], context.previousItems);
+      }
       toast.error('Failed to update item availability');
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries(['seller-food-items', user?._id]);
+    },
+    onSuccess: () => {
+      toast.success('Item availability updated');
     },
   });
 

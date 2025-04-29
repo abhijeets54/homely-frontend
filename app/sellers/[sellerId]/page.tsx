@@ -175,7 +175,7 @@ const handleAddToCart = (item: any) => {
                     All Items
                   </TabsTrigger>
                   {categories.map((category: any) => (
-                    <TabsTrigger key={category.id} value={category.id} className="mb-2">
+                    <TabsTrigger key={category._id} value={category._id} className="mb-2">
                       {category.name}
                     </TabsTrigger>
                   ))}
@@ -189,7 +189,7 @@ const handleAddToCart = (item: any) => {
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {filteredMenuItems.map((item: any) => (
-                        <Card key={item.id} className={`overflow-hidden ${!item.isAvailable || item.stock <= 0 ? 'opacity-70' : ''}`}>
+                        <Card key={item._id} className={`overflow-hidden ${!item.isAvailable || item.stock <= 0 ? 'opacity-70' : ''}`}>
                           <div className="relative h-48">
                             <Image
                               src={item.imageUrl || `https://source.unsplash.com/random/400x300/?food,${item.name}`}

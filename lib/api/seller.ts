@@ -87,7 +87,7 @@ export const sellerApi = {
    */
   updateCategory: async (categoryId: string, data: { name: string }): Promise<Category> => {
     try {
-      const response = await apiClient.put<Category>(`/api/category/${categoryId}`, { name });
+      const response = await apiClient.put<Category>(`/api/category/${categoryId}`, { name: data.name });
       return response.data;
     } catch (error) {
       console.error('Error updating category:', error);
@@ -111,9 +111,17 @@ export const sellerApi = {
    * Get all food items for a seller
    */
   getFoodItems: async (sellerId: string): Promise<FoodItem[]> => {
+    if (!sellerId) {
+      console.error('Seller ID is missing!');
+      return [];
+    }
     try {
-      const response = await apiClient.get<FoodItem[]>('/api/food', { params: { sellerId } });
-      return response.data;
+      const response = await apiClient.get<FoodItem[]>(`/api/food/seller/${sellerId}`);
+      // Map _id to id for food items
+      return response.data.map((item) => ({
+        ...item,
+        id: (item as any)._id,
+      }));
     } catch (error) {
       console.error('Error fetching seller food items:', error);
       return [];
@@ -285,6 +293,17 @@ export const sellerApi = {
       throw error;
     }
   },
+  /* Update menu item availability
+  */
+ updateMenuItemAvailability: async (itemId: string, isAvailable: boolean): Promise<FoodItem> => {
+   try {
+     const response = await apiClient.put<FoodItem>(`/api/food/${itemId}/availability`, { isAvailable });
+     return response.data;
+   } catch (error) {
+     console.error(`Error updating menu item availability ${itemId}:`, error);
+     throw error;
+   }
+ },
 
   /**
    * Delete menu item
@@ -297,4 +316,4 @@ export const sellerApi = {
       throw error;
     }
   }
-}; 
+};

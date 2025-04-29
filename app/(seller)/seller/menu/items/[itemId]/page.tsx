@@ -44,8 +44,8 @@ export default function EditFoodItemPage({ params }: { params: { itemId: string 
     error: foodItemError
   } = useQuery({
     queryKey: ['food-item', itemId],
-    queryFn: () => sellerApi.getMenuItems(itemId),
-    enabled: isAuthenticated && !!itemId,
+    queryFn: () => sellerApi.getMenuItems(sellerId!),
+    enabled: isAuthenticated && !!sellerId,
   });
 
   // Fetch categories

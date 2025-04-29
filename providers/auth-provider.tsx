@@ -7,12 +7,12 @@ import { User, UserRole } from '../lib/types/auth';
 import { LoginData, RegisterData } from '../lib/types/auth';
 import Cookies from 'js-cookie';
 
-
 interface AuthContextType {
   user: User | null;
   role: UserRole | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isInitializing: boolean;
   error: string | null;
   login: (data: LoginData) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
@@ -31,7 +31,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  // Initialize auth state from localStorage on mount
   useEffect(() => {
     setIsInitializing(true);
 
@@ -39,46 +38,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         setIsLoading(true);
 
-        // Check if we have a token in localStorage or cookies
+        // Load stored user from localStorage first to avoid flash
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser) as User;
+          setUser(parsedUser);
+          setRole(parsedUser.role as UserRole);
+          setIsAuthenticated(true);
+        }
+
         const token = localStorage.getItem('token') || Cookies.get('token');
 
         if (token) {
-          // console.log('Found token, fetching user data');
-
-          // Ensure token is in both localStorage and cookies
           localStorage.setItem('token', token);
           Cookies.set('token', token, { expires: 7, path: '/' });
 
           try {
-            // Fetch current user data
             const response = await authApi.getCurrentUser();
-
             if (response.user) {
               setUser(response.user);
-              setRole(response.userType as UserRole); // Set role based on userType
+              setRole(response.userType as UserRole);
               setIsAuthenticated(true);
-
-              // Set userType cookie
+              localStorage.setItem('user', JSON.stringify(response.user));
+              localStorage.setItem('role', response.userType as string);
               Cookies.set('userType', response.user.role, { expires: 7, path: '/' });
-
-              console.log('User authenticated:', response.user);
             } else {
-              // Clear invalid auth data
-              localStorage.removeItem('token');
-              Cookies.remove('token');
-              Cookies.remove('userType');
-              console.log('Invalid user data, cleared auth state');
+              clearAuthState();
               setError('Your session has expired. Please log in again.');
+              router.push('/login');
             }
           } catch (err) {
             console.error('Error fetching user data:', err);
-            // Clear invalid auth data
-            localStorage.removeItem('token');
-            Cookies.remove('token');
-            Cookies.remove('userType');
+            clearAuthState();
+            router.push('/login');
           }
-        } else {
-          console.log('No token found');
         }
       } catch (err) {
         console.error('Auth initialization error:', err);
@@ -92,7 +85,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initializeAuth();
   }, []);
 
-  // On app initialization, retrieve the role
   useEffect(() => {
     const storedRole = localStorage.getItem('role');
     if (storedRole) {
@@ -101,34 +93,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   useEffect(() => {
-    // console.log('Auth state updated:', { user, role, isAuthenticated });
-  }, [user, role, isAuthenticated]);
+    if (role) {
+      localStorage.setItem('role', role);
+    } else {
+      localStorage.removeItem('role');
+    }
+  }, [role]);
 
   const login = async (data: LoginData) => {
     try {
       setIsLoading(true);
       setError(null);
 
-      console.log('Logging in with data:', { ...data, password: '***' });
-
       const response = await authApi.login(data);
 
       if (response.token && response.user) {
-        // Save token to localStorage and cookies
         localStorage.setItem('token', response.token);
+        localStorage.setItem('user', JSON.stringify(response.user));
+        localStorage.setItem('role', response.userType as string);
         Cookies.set('token', response.token, { expires: 7, path: '/' });
-
-        // Save userType to cookies
         Cookies.set('userType', response.user.role, { expires: 7, path: '/' });
 
-        // Save user data
         setUser(response.user);
-        setRole(response.userType as UserRole); // Set role based on userType
+        setRole(response.userType as UserRole);
         setIsAuthenticated(true);
 
-        // console.log('Login successful, redirecting based on role');
-
-        // Redirect based on role
         if (response.user.role === 'customer') {
           router.push('/customer/dashboard');
         } else if (response.user.role === 'seller') {
@@ -155,28 +144,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(true);
       setError(null);
 
-      console.log('Registering with data:', { ...data, password: '***' });
-
       const response = await authApi.register(data);
-      // console.log('Registration API response:', response);
 
       if (response.token && response.user) {
-        // Save token to localStorage and cookies
-        localStorage.setItem('token', response.token);
-        Cookies.set('token', response.token, { expires: 7, path: '/' });
-
-        // Save userType to cookies
         const userRole = response.user.role || data.role;
+
+        localStorage.setItem('token', response.token);
+        localStorage.setItem('user', JSON.stringify(response.user));
+        localStorage.setItem('role', userRole);
+        Cookies.set('token', response.token, { expires: 7, path: '/' });
         Cookies.set('userType', userRole, { expires: 7, path: '/' });
 
-        // Save user data
         setUser(response.user);
         setRole(userRole as UserRole);
         setIsAuthenticated(true);
 
-        console.log('Registration successful, redirecting based on role:', userRole);
-
-        // Redirect based on role
         if (userRole === 'customer') {
           router.push('/customer/dashboard');
         } else if (userRole === 'seller') {
@@ -202,45 +184,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setIsLoading(true);
 
-      // Call the logout API (client-side only)
       await authApi.logout();
 
-      // Clear auth state
-      setUser(null);
-      setRole(null);
-      setIsAuthenticated(false);
-
-      // Redirect to home page
+      clearAuthState();
       router.push('/');
     } catch (err) {
       console.error('Logout error:', err);
-
-      // Clear local state
-      localStorage.removeItem('token');
-      Cookies.remove('token');
-      Cookies.remove('userType');
-
-      // Clear auth state
-      setUser(null);
-      setRole(null);
-      setIsAuthenticated(false);
-
-      // Redirect to home page
+      clearAuthState();
       router.push('/');
     } finally {
       setIsLoading(false);
     }
   };
 
+  const clearAuthState = () => {
+    setUser(null);
+    setRole(null);
+    setIsAuthenticated(false);
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('role');
+    Cookies.remove('token');
+    Cookies.remove('userType');
+  };
+
   const clearError = () => {
     setError(null);
   };
 
-  const value = {
+  const value: AuthContextType = {
     user,
     role,
     isAuthenticated,
     isLoading,
+    isInitializing,
     error,
     login,
     register,
@@ -253,7 +230,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       {isInitializing ? <div>Loading...</div> : children}
     </AuthContext.Provider>
   );
-
 };
 
 export const useAuth = () => {
@@ -261,7 +237,6 @@ export const useAuth = () => {
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
-  // console.log('Auth context:', { user: context.user, role: context.role, isAuthenticated: context.isAuthenticated });
   return context;
 };
 

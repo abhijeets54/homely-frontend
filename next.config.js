@@ -7,7 +7,8 @@ const nextConfig = {
       'images.unsplash.com',
       'localhost',
       'res.cloudinary.com',
-      't3.ftcdn.net' // Added this line
+      't3.ftcdn.net',
+      'images.pexels.com' // Added Pexels domain for food images
     ],
   },
   experimental: {

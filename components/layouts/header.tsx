@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/providers/auth-provider';
 import { useCart } from '@/components/providers/cart-provider';
+import { ImprovedCartSheet } from '@/components/features/cart/improved-cart-sheet';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
@@ -116,61 +117,7 @@ export function Header() {
         <div className="flex items-center space-x-4">
           {/* Cart (only for customers) */}
           {(!role || role === 'customer') && (
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="sm" className="relative">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
-                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-                    <line x1="3" y1="6" x2="21" y2="6"></line>
-                    <path d="M16 10a4 4 0 0 1-8 0"></path>
-                  </svg>
-                  Cart
-                  {totalItems > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-primary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                      {totalItems}
-                    </span>
-                  )}
-                </Button>
-              </SheetTrigger>
-              <SheetContent>
-                <SheetHeader>
-                  <SheetTitle>Your Cart</SheetTitle>
-                  <SheetDescription>
-                    Your shopping cart items
-                  </SheetDescription>
-                </SheetHeader>
-                <div className="mt-4">
-                  {totalItems === 0 ? (
-                    <p className="py-6 text-center text-gray-500">Your cart is empty</p>
-                  ) : (
-                    <div className="mt-4">
-                      <div className="space-y-4">
-                        {cartItems.map((item) => (
-                          <div key={item.id} className="flex items-center justify-between">
-                            <div>
-                              <p className="font-medium">{item.foodItem?.name}</p>
-                              <p className="text-sm text-gray-500">
-                                {item.quantity} x {formatPrice(item.price)}
-                              </p>
-                            </div>
-                            <p className="font-semibold">{formatPrice(item.price * item.quantity)}</p>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="mt-6 pt-4 border-t border-gray-200">
-                        <div className="flex items-center justify-between font-semibold">
-                          <p>Total</p>
-                          <p>{formatPrice(totalPrice)}</p>
-                        </div>
-                        <Button className="w-full mt-4" asChild>
-                          <Link href="/checkout">Checkout</Link>
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </SheetContent>
-            </Sheet>
+            <ImprovedCartSheet />
           )}
 
           {/* Authentication */}

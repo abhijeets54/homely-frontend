@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState, useEffect, use } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Image from 'next/image';
 import Link from 'next/link';
 import { MainLayout } from '@/components/layouts';
@@ -11,13 +11,81 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
-import { sellerApi, foodApi, useAddToCart } from '@/lib/api';
+import { foodApi, useAddToCart } from '@/lib/api';
 import { useAuth } from '@/providers/auth-provider';
 import { Seller, Category, FoodItem } from '@/lib/types/models';
 import { MapPin, Star, Clock, Phone, Plus, Minus, ShoppingCart } from 'lucide-react';
+import axios from 'axios';
+import { useFormStatus } from 'react-dom';
 
-export default function RestaurantDetailPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+// Function to emit cart event (will be called on the client)
+function emitCartEvent(success: boolean, message: string) {
+  if (typeof window !== 'undefined') {
+    console.log('Emitting cart event:', { success, message });
+    const event = new CustomEvent('cartResponse', { 
+      detail: { success, message } 
+    });
+    window.dispatchEvent(event);
+  }
+}
+
+// Server action for adding to cart
+async function addItemToCart(formData: FormData) {
+  'use server';
+  
+  console.log('Server action: Adding item to cart');
+  
+  let success = false;
+  let message = '';
+  
+  try {
+    const foodItemId = formData.get('foodItemId') as string;
+    const quantity = parseInt(formData.get('quantity') as string);
+    const itemName = formData.get('itemName') as string;
+    
+    if (!foodItemId || isNaN(quantity) || quantity <= 0) {
+      console.error('Invalid food item or quantity', { foodItemId, quantity });
+      message = 'Invalid quantity selected';
+      return { success, message };
+    }
+    
+    console.log('Server action: Making API request with', { foodItemId, quantity });
+    
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart/items`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${formData.get('token')}`
+      },
+      body: JSON.stringify({ foodItemId, quantity }),
+      cache: 'no-store'
+    });
+    
+    console.log('Server action: API response status:', response.status);
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Failed to add item to cart', errorData);
+      message = errorData.message || 'Failed to add item to cart';
+      return { success, message };
+    }
+    
+    console.log('Item added to cart successfully');
+    success = true;
+    message = `${quantity} × ${itemName} added to your cart.`;
+  } catch (error) {
+    console.error('Error in server action:', error);
+    message = 'An error occurred while adding to cart';
+  }
+  
+  // Return the result that will be available to the client
+  return { success, message };
+}
+
+export default function RestaurantDetailPage({ params }: { params: Promise<{ id: string }> | { id: string } }) {
+  // Unwrap params using React.use() to handle both Promise and direct object
+  const unwrappedParams = 'then' in params ? use(params) : params;
+  const { id } = unwrappedParams;
   const { toast } = useToast();
   const { user, isAuthenticated } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -25,6 +93,35 @@ export default function RestaurantDetailPage({ params }: { params: { id: string 
   
   // Add to cart mutation
   const addToCart = useAddToCart();
+  
+  // Listen for cart response events from server actions
+  useEffect(() => {
+    const handleCartResponse = (event: CustomEvent<{ success: boolean; message: string }>) => {
+      console.log('Cart response event received:', event.detail);
+      const { success, message } = event.detail;
+      
+      if (success) {
+        toast({
+          title: "Added to Cart",
+          description: message,
+        });
+        
+        // Invalidate cart queries to refresh the cart data
+        queryClient.invalidateQueries({ queryKey: ['cart'] });
+      } else {
+        toast({
+          title: "Error",
+          description: message,
+          variant: "destructive",
+        });
+      }
+    };
+    
+    window.addEventListener('cartResponse', handleCartResponse as EventListener);
+    return () => {
+      window.removeEventListener('cartResponse', handleCartResponse as EventListener);
+    };
+  }, [toast, queryClient]);
 
   // Fetch restaurant details
   const { 
@@ -35,7 +132,7 @@ export default function RestaurantDetailPage({ params }: { params: { id: string 
     queryKey: ['restaurant', id],
     queryFn: async () => {
       try {
-        const response = await sellerApi.getSellerById(id);
+        const response = await foodApi.getSellerById(id);
         return response;
       } catch (error) {
         console.error('Error fetching restaurant details:', error);
@@ -53,7 +150,7 @@ export default function RestaurantDetailPage({ params }: { params: { id: string 
     queryKey: ['categories', id],
     queryFn: async () => {
       try {
-        const response = await foodApi.getCategories(id);
+        const response = await foodApi.getCategoriesBySeller(id);
         return response;
       } catch (error) {
         console.error('Error fetching categories:', error);
@@ -80,7 +177,7 @@ export default function RestaurantDetailPage({ params }: { params: { id: string 
     queryFn: async () => {
       try {
         if (!selectedCategory) return [];
-        const response = await foodApi.getFoodItems(id, selectedCategory);
+        const response = await foodApi.getFoodItemsByCategory(selectedCategory);
         return response;
       } catch (error) {
         console.error('Error fetching food items:', error);
@@ -110,6 +207,15 @@ export default function RestaurantDetailPage({ params }: { params: { id: string 
       return;
     }
 
+    if (user?.role !== 'customer') {
+      toast({
+        title: "Access Denied",
+        description: "Only customers can add items to cart.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const quantity = quantities[foodItem.id] || 0;
     if (quantity <= 0) {
       toast({
@@ -120,9 +226,14 @@ export default function RestaurantDetailPage({ params }: { params: { id: string 
       return;
     }
 
+    // Show loading state
+    toast({
+      title: "Adding to Cart",
+      description: `Adding ${quantity} × ${foodItem.name} to your cart...`,
+    });
+
     addToCart.mutate(
       { 
-        customerId: user?.id || '', 
         foodItemId: foodItem.id, 
         quantity 
       },
@@ -130,21 +241,53 @@ export default function RestaurantDetailPage({ params }: { params: { id: string 
         onSuccess: () => {
           toast({
             title: "Added to Cart",
-            description: `${quantity} x ${foodItem.name} added to your cart.`,
+            description: `${quantity} × ${foodItem.name} added to your cart.`,
           });
           // Reset quantity after adding to cart
           setQuantities(prev => ({ ...prev, [foodItem.id]: 0 }));
         },
-        onError: (error) => {
+        onError: (error: any) => {
+          console.error('Add to cart error:', error);
+          
+          // Extract error message for display
+          let errorMessage = 'Unknown error occurred';
+          if (error instanceof Error) {
+            errorMessage = error.message;
+          } else if (axios.isAxiosError(error) && error.response) {
+            errorMessage = error.response.data?.message || 'Server error';
+          }
+          
           toast({
             title: "Error",
-            description: `Failed to add item to cart: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            description: `Failed to add item to cart: ${errorMessage}`,
             variant: "destructive",
           });
         }
       }
     );
   };
+
+  // Add this useEffect to handle cart responses
+  React.useEffect(() => {
+    // Listen for cart response messages
+    const handleCartResponse = (event: CustomEvent) => {
+      const { success, message } = event.detail;
+      
+      toast({
+        title: success ? "Added to Cart" : "Error",
+        description: message,
+        variant: success ? "default" : "destructive",
+      });
+    };
+    
+    // Add event listener
+    window.addEventListener('cartResponse' as any, handleCartResponse);
+    
+    // Clean up
+    return () => {
+      window.removeEventListener('cartResponse' as any, handleCartResponse);
+    };
+  }, [toast]);
 
   // Loading state
   const isLoading = restaurantLoading || categoriesLoading || foodItemsLoading;
@@ -198,7 +341,7 @@ export default function RestaurantDetailPage({ params }: { params: { id: string 
             <div className="mb-8">
               <div className="relative h-64 w-full rounded-lg overflow-hidden mb-4">
                 <Image
-                  src={restaurant.imageUrl || '/placeholder-restaurant.jpg'}
+                  src={restaurant.image || '/placeholder-restaurant.jpg'}
                   alt={restaurant.name}
                   fill
                   className="object-cover"
@@ -328,12 +471,37 @@ export default function RestaurantDetailPage({ params }: { params: { id: string 
                                         <Plus className="h-4 w-4" />
                                       </Button>
                                     </div>
-                                    <Button
-                                      onClick={() => handleAddToCart(item)}
-                                      disabled={!quantities[item.id]}
+                                    <form 
+                                      action={async (formData) => {
+                                        console.log('Form submitted with data', Object.fromEntries(formData.entries()));
+                                        const result = await addItemToCart(formData);
+                                        console.log('Server action result:', result);
+                                        if (result?.success) {
+                                          // Reset quantity after adding to cart
+                                          setQuantities(prev => ({ ...prev, [item.id]: 0 }));
+                                          // Emit the event for client-side handling
+                                          emitCartEvent(result.success, result.message);
+                                        }
+                                      }}
                                     >
-                                      Add to Cart
-                                    </Button>
+                                      <input type="hidden" name="foodItemId" value={item.id} />
+                                      <input type="hidden" name="quantity" value={quantities[item.id] || 0} />
+                                      <input type="hidden" name="itemName" value={item.name} />
+                                      <input 
+                                        type="hidden" 
+                                        name="token" 
+                                        value={typeof window !== 'undefined' ? localStorage.getItem('token') || '' : ''} 
+                                      />
+                                      <Button 
+                                        type="submit" 
+                                        disabled={!quantities[item.id]}
+                                        onClick={() => {
+                                          console.log('Add to Cart button clicked for item:', item.id);
+                                        }}
+                                      >
+                                        Add to Cart
+                                      </Button>
+                                    </form>
                                   </div>
                                 ) : (
                                   <Badge variant="destructive" className="mt-4">

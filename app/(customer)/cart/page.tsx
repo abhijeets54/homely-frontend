@@ -24,7 +24,7 @@ export default function CartPage() {
     isLoading: cartLoading, 
     error: cartError,
     refetch: refetchCart
-  } = useCart(user?.id || '');
+  } = useCart();
   
   // Cart mutations
   const updateCartItem = useUpdateCartItem();
@@ -37,7 +37,7 @@ export default function CartPage() {
     if (!user?.id) return;
     
     updateCartItem.mutate(
-      { customerId: user.id, cartItemId, quantity },
+      { cartItemId, quantity },
       {
         onSuccess: () => {
           toast({
@@ -62,7 +62,7 @@ export default function CartPage() {
     if (!user?.id) return;
     
     removeFromCart.mutate(
-      { customerId: user.id, cartItemId },
+      cartItemId,
       {
         onSuccess: () => {
           toast({
@@ -87,7 +87,7 @@ export default function CartPage() {
     if (!user?.id) return;
     
     clearCart.mutate(
-      user.id,
+      undefined,
       {
         onSuccess: () => {
           toast({
@@ -112,7 +112,7 @@ export default function CartPage() {
     if (!user?.id) return;
     
     updateCartStatus.mutate(
-      { customerId: user.id, status: 'checkout' },
+      { status: 'checkout' },
       {
         onSuccess: () => {
           toast({

@@ -9,7 +9,7 @@ export const cartApi = {
     try {
       // The backend uses the token to identify the user
       const response = await client.get(`/api/cart`);
-      return response.data;
+      return response.data.cart;
     } catch (error) {
       console.error('Error fetching cart:', error);
       throw error;
@@ -19,13 +19,46 @@ export const cartApi = {
   // Add item to cart
   async addToCart(foodItemId: string, quantity: number): Promise<Cart> {
     try {
-      const response = await client.post(`/api/cart/items`, {
+      console.log('Adding to cart:', { foodItemId, quantity });
+      
+      // Ensure we have a valid token
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      if (!token) {
+        console.error('No token available when adding to cart');
+        throw new Error('Authentication required. Please login to add items to cart.');
+      }
+      
+      // Make sure we're using the correct endpoint format
+      const response = await client.post('/api/cart/items', {
         foodItemId,
-        quantity
+        quantity: Number(quantity) // Ensure quantity is a number
       });
-      return response.data;
-    } catch (error) {
+      
+      console.log('Add to cart response:', response.status, response.data);
+      
+      if (response.data && response.data.cart) {
+        return response.data.cart;
+      }
+      
+      // If the response doesn't include the cart, fetch it separately
+      const updatedCart = await this.getCart();
+      return updatedCart;
+    } catch (error: any) {
       console.error('Error adding item to cart:', error);
+      // Provide more specific error messages based on the response
+      if (error.response) {
+        const status = error.response.status;
+        if (status === 401) {
+          throw new Error('Your session has expired. Please login again.');
+        } else if (status === 403) {
+          throw new Error('You do not have permission to add items to cart. Only customers can add items.');
+        } else if (status === 404) {
+          throw new Error('The food item you are trying to add could not be found.');
+        } else if (status === 400) {
+          const message = error.response.data?.message || 'Invalid request. Please check the item details.';
+          throw new Error(message);
+        }
+      }
       throw error;
     }
   },
@@ -33,10 +66,13 @@ export const cartApi = {
   // Update cart item quantity
   async updateCartItem(cartItemId: string, quantity: number): Promise<Cart> {
     try {
-      const response = await client.put(`/api/cart/items/${cartItemId}`, {
+      await client.put(`/api/cart/items/${cartItemId}`, {
         quantity
       });
-      return response.data;
+      
+      // Return the updated cart after modifying an item
+      const updatedCart = await this.getCart();
+      return updatedCart;
     } catch (error) {
       console.error('Error updating cart item:', error);
       throw error;
@@ -46,8 +82,11 @@ export const cartApi = {
   // Remove item from cart
   async removeFromCart(cartItemId: string): Promise<Cart> {
     try {
-      const response = await client.delete(`/api/cart/items/${cartItemId}`);
-      return response.data;
+      await client.delete(`/api/cart/items/${cartItemId}`);
+      
+      // Return the updated cart after removing an item
+      const updatedCart = await this.getCart();
+      return updatedCart;
     } catch (error) {
       console.error('Error removing item from cart:', error);
       throw error;
@@ -57,27 +96,29 @@ export const cartApi = {
   // Clear cart
   async clearCart(): Promise<Cart> {
     try {
-      // Updated to match the backend route
-      const response = await client.delete(`/api/cart`);
-      return response.data;
+      await client.delete(`/api/cart`);
+      
+      // Return an empty cart after clearing
+      const updatedCart = await this.getCart();
+      return updatedCart;
     } catch (error) {
       console.error('Error clearing cart:', error);
       throw error;
     }
   },
 
-  // Update cart status (this might need to be implemented in the backend)
+  // Update cart status
   async updateCartStatus(status: 'active' | 'checkout'): Promise<Cart> {
     try {
       const response = await client.put(`/api/cart/status`, { status });
-      return response.data;
+      return response.data.cart;
     } catch (error) {
       console.error('Error updating cart status:', error);
       throw error;
     }
   },
 
-  // Checkout cart (this might need to be implemented in the backend)
+  // Checkout cart
   async checkout(deliveryAddress: string, specialInstructions?: string): Promise<any> {
     try {
       const response = await client.post(`/api/cart/checkout`, {
@@ -97,6 +138,8 @@ export const useCart = () => {
   return useQuery({
     queryKey: ['cart'],
     queryFn: () => cartApi.getCart(),
+    retry: 1,
+    staleTime: 30000,
   });
 };
 
@@ -104,11 +147,17 @@ export const useAddToCart = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ foodItemId, quantity }: { foodItemId: string; quantity: number }) => 
-      cartApi.addToCart(foodItemId, quantity),
-    onSuccess: () => {
+    mutationFn: ({ foodItemId, quantity }: { foodItemId: string; quantity: number }) => {
+      console.log('useAddToCart mutation executing with:', { foodItemId, quantity });
+      return cartApi.addToCart(foodItemId, quantity);
+    },
+    onSuccess: (data) => {
+      console.log('Cart updated successfully');
       queryClient.invalidateQueries({ queryKey: ['cart'] });
     },
+    onError: (error) => {
+      console.error('useAddToCart mutation error:', error);
+    }
   });
 };
 

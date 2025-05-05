@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useQuery } from '@tanstack/react-query';
@@ -14,6 +14,7 @@ import { formatPrice } from '../../../lib/utils/format';
 import { useCart } from '../../../components/providers/cart-provider';
 import { useAuth } from '../../../providers/auth-provider'; // Corrected import
 import { toast } from 'sonner';
+import { debugCartApi } from '../../../lib/api/debug-cart';
 
 interface SellerDetailPageProps {
   params: {
@@ -22,7 +23,8 @@ interface SellerDetailPageProps {
 }
 
 export default function SellerDetailPage({ params }: SellerDetailPageProps) {
-  const { sellerId } = React.use(params); // Unwrap params using React.use()
+  // Properly extract the sellerId parameter using React.use()
+  const { sellerId } = React.use(params);
 
   // Ensure sellerId is defined
   if (!sellerId) {
@@ -31,8 +33,22 @@ export default function SellerDetailPage({ params }: SellerDetailPageProps) {
   }
 
   const { isAuthenticated } = useAuth(); // Use useAuth instead of useAuthContext
-  const { addToCart } = useCart();
+  const { addToCart, setOpenCartCallback } = useCart();
   const [activeCategory, setActiveCategory] = useState<string>('all');
+  
+  // Set a direct cart opening function
+  useEffect(() => {
+    const openCartDirectly = () => {
+      // This will be called when an item is added to cart
+      // The actual opening happens in the ImprovedCartSheet component
+      console.log('Item added to cart, should open cart now');
+    };
+    
+    setOpenCartCallback(openCartDirectly);
+    
+    // Clean up the callback when the component unmounts
+    return () => setOpenCartCallback(() => {});
+  }, [setOpenCartCallback]);
 
   // Fetch seller details
   const { 
@@ -73,27 +89,50 @@ export default function SellerDetailPage({ params }: SellerDetailPageProps) {
 
   // Handle add to cart
 
-const handleAddToCart = (item: any) => {
-  if (!isAuthenticated) {
-    toast.error('Please log in to add items to your cart');
-    return;
-  }
+  const handleAddToCart = async (item: any) => {
+    // Check if item is available
+    if (!item.isAvailable) {
+      toast.error('This item is currently unavailable');
+      return;
+    }
 
-  if (!item.isAvailable || item.stock <= 0) {
-    toast.error('This item is currently unavailable');
-    return;
-  }
-
-  addToCart(item, 1); // Pass the item and quantity of 1
-
-  toast.success(`${item.name} added to cart`);
-};
-
-  // const handleAddToCart = (item: any) => {
-  //   if (!isAuthenticated) {
-  //     toast.error('Please log in to add items to your cart');
-  //     return;
-  //   }
+    try {
+      console.log('Attempting to add to cart:', item);
+      
+      // Make sure we're using the correct ID field
+      const itemId = item._id || item.id;
+      
+      if (!itemId) {
+        console.error('Item has no ID:', item);
+        toast.error('Could not add item to cart: Missing item ID');
+        return;
+      }
+      
+      // Convert the item to a proper FoodItem format if needed
+      const foodItem = {
+        id: itemId,
+        name: item.name,
+        price: item.price,
+        imageUrl: item.imageUrl || '',
+        isAvailable: item.isAvailable,
+        categoryId: item.categoryId || '',
+        restaurantId: item.restaurantId || sellerId,
+        createdAt: item.createdAt || new Date().toISOString(),
+        updatedAt: item.updatedAt || new Date().toISOString(),
+        stock: item.stock || 10,
+        description: item.description || '',
+        dietaryInfo: item.dietaryInfo || ''
+      };
+      
+      // Use our improved cart function which works with or without authentication
+      await addToCart(foodItem, 1);
+      
+      toast.success(`${item.name} added to cart`);
+    } catch (error) {
+      console.error('Failed to add item to cart:', error);
+      toast.error(`Could not add ${item.name} to cart: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
 
   //   if (!item.isAvailable || item.stock <= 0) {
   //     toast.error('This item is currently unavailable');

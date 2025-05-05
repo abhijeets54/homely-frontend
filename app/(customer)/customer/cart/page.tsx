@@ -21,7 +21,7 @@ import Link from 'next/link';
 
 export default function CartPage() {
   const { user } = useAuth();
-  const { data: cart, isLoading } = useCart(user?.id || '');
+  const { data: cart, isLoading } = useCart();
   const { mutate: updateCart } = useUpdateCart();
   const { mutate: createOrder } = useCreateOrder();
   const { toast } = useToast();

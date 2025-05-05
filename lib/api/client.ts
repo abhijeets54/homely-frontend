@@ -17,9 +17,29 @@ const apiClient = axios.create({
 // Add a request interceptor to include the auth token in requests
 apiClient.interceptors.request.use(
   (config) => {
-    const token = getCookie('token') || localStorage.getItem('token');
+    // Try to get token from cookies first (for SSR), then localStorage (for client-side)
+    let token;
+    try {
+      // For client-side, prioritize localStorage first as it's more reliable
+      if (typeof window !== 'undefined') {
+        token = localStorage.getItem('token');
+        console.log('Token from localStorage:', token ? 'Found' : 'Not found');
+      }
+      
+      // If no token in localStorage, try cookies
+      if (!token) {
+        token = getCookie('token');
+        console.log('Token from cookies:', token ? 'Found' : 'Not found');
+      }
+    } catch (error) {
+      console.error('Error accessing token:', error);
+    }
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('Authorization header set:', `Bearer ${typeof token === 'string' ? token.substring(0, 10) : token}...`);
+    } else {
+      console.warn('No auth token available for request to:', config.url);
     }
     return config;
   },
@@ -39,7 +59,8 @@ apiClient.interceptors.response.use(
     // Handle specific error cases
     if (response && response.status === 401) {
       // Handle unauthorized access (e.g., redirect to login)
-      alert('Your session has expired. Please log in again.');
+      console.error('Authentication error: Your session has expired');
+      
       if (typeof window !== 'undefined') {
         // Clear token
         localStorage.removeItem('token');

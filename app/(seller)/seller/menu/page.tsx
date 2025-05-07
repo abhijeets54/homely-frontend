@@ -19,6 +19,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { UtensilsCrossed } from 'lucide-react';
 import type { Category, FoodItem } from '@/lib/types';
 
+const getCategoryId = (categoryId: any) =>
+  typeof categoryId === 'string'
+    ? categoryId
+    : categoryId?._id || categoryId?.id || '';
+
 export default function SellerMenuPage() {
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const queryClient = useQueryClient();
@@ -31,7 +36,7 @@ export default function SellerMenuPage() {
   console.log('user._id:', user?._id);
 
   const { data: categoriesData = [], isLoading: categoriesLoading, error: categoriesError } = useQuery({
-    queryKey: ['seller-categories', user?._id],
+    queryKey: ['seller-categories', user?._id] as const,
     queryFn: async () => {
       if (!user?._id) {
         console.warn('QueryFn: user._id is missing! Skipping API call.');
@@ -48,8 +53,8 @@ export default function SellerMenuPage() {
     isLoading: foodItemsLoading,
     error: foodItemsError,
   } = useQuery({
-    queryKey: ['seller-food-items', user?._id],
-    queryFn: () => sellerApi.getFoodItems(user!._id), // 👈 pass user._id here
+    queryKey: ['seller-food-items', user?._id] as const,
+    queryFn: () => sellerApi.getFoodItems(user!._id),
     enabled: isAuthenticated && !!user && !!user._id,
   });
 
@@ -57,21 +62,25 @@ export default function SellerMenuPage() {
     mutationFn: ({ itemId, isAvailable }: { itemId: string; isAvailable: boolean }) =>
       sellerApi.updateMenuItemAvailability(itemId, isAvailable),
     onMutate: async ({ itemId, isAvailable }) => {
-      await queryClient.cancelQueries(['seller-food-items', user?._id]);
-      const previousItems = queryClient.getQueryData<FoodItem[]>(['seller-food-items', user?._id]);
-      queryClient.setQueryData<FoodItem[]>(['seller-food-items', user?._id], (old) =>
+      await queryClient.cancelQueries({ 
+        queryKey: ['seller-food-items', user?._id] as const 
+      });
+      const previousItems = queryClient.getQueryData<FoodItem[]>(['seller-food-items', user?._id] as const);
+      queryClient.setQueryData<FoodItem[]>(['seller-food-items', user?._id] as const, (old) =>
         old?.map((item) => (item.id === itemId ? { ...item, isAvailable } : item))
       );
       return { previousItems };
     },
     onError: (err, variables, context) => {
       if (context?.previousItems) {
-        queryClient.setQueryData(['seller-food-items', user?._id], context.previousItems);
+        queryClient.setQueryData(['seller-food-items', user?._id] as const, context.previousItems);
       }
       toast.error('Failed to update item availability');
     },
     onSettled: () => {
-      queryClient.invalidateQueries(['seller-food-items', user?._id]);
+      queryClient.invalidateQueries({ 
+        queryKey: ['seller-food-items', user?._id] as const 
+      });
     },
     onSuccess: () => {
       toast.success('Item availability updated');
@@ -81,7 +90,9 @@ export default function SellerMenuPage() {
   const deleteItemMutation = useMutation({
     mutationFn: (itemId: string) => sellerApi.deleteMenuItem(itemId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['seller-food-items', user?._id] });
+      queryClient.invalidateQueries({ 
+        queryKey: ['seller-food-items', user?._id] as const 
+      });
       toast.success('Item deleted successfully');
     },
     onError: () => {
@@ -92,11 +103,18 @@ export default function SellerMenuPage() {
   const deleteCategoryMutation = useMutation({
     mutationFn: (categoryId: string) => sellerApi.deleteCategory(categoryId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['seller-categories', user?._id] });
+      queryClient.invalidateQueries({ 
+        queryKey: ['seller-categories', user?._id] as const 
+      });
       toast.success('Category deleted successfully');
     },
-    onError: () => {
-      toast.error('Failed to delete category');
+    onError: (error: any) => {
+      if (error?.response?.status === 400) {
+        toast.error('Cannot delete category with food items. Please move or delete the items first.');
+      } else {
+        toast.error('Failed to delete category');
+      }
+      console.error('Error deleting category:', error);
     },
   });
 
@@ -109,12 +127,20 @@ export default function SellerMenuPage() {
   };
 
   const handleDeleteCategory = (id: string) => {
-    if (confirm('Delete this category?')) deleteCategoryMutation.mutate(id);
+    const hasItems = foodItemsData.some((item) => getCategoryId(item.categoryId) === id);
+    if (hasItems) {
+      toast.error('Cannot delete category with food items. Please move or delete the items first.');
+      return;
+    }
+    
+    if (confirm('Are you sure you want to delete this category?')) {
+      deleteCategoryMutation.mutate(id);
+    }
   };
 
   const filteredItems = foodItemsData.filter((item) => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || item.categoryId === selectedCategory;
+    const matchesCategory = selectedCategory === 'all' || getCategoryId(item.categoryId) === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
@@ -262,13 +288,13 @@ export default function SellerMenuPage() {
                 ) : (
                   <div className="space-y-4">
                     {categoriesData.map((cat) => {
-                      const hasItems = foodItemsData.some((item) => item.categoryId === cat.id);
+                      const hasItems = foodItemsData.some((item) => getCategoryId(item.categoryId) === cat.id);
                       return (
                         <div key={cat.id} className="flex justify-between items-center border p-4 rounded-md">
                           <div>
                             <h3 className="font-semibold text-lg">{cat.name}</h3>
                             <p className="text-sm text-muted-foreground">
-                              {foodItemsData.filter((item) => item.categoryId === cat.id).length} items
+                              {foodItemsData.filter((item) => getCategoryId(item.categoryId) === cat.id).length} items
                             </p>
                           </div>
                           <div className="flex gap-2">

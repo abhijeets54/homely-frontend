@@ -22,6 +22,12 @@ interface SellerDetailPageProps {
   };
 }
 
+// Add this helper at the top, after imports
+const getCategoryId = (categoryId: any) =>
+  typeof categoryId === 'string'
+    ? categoryId
+    : categoryId?._id || categoryId?.id || '';
+
 export default function SellerDetailPage({ params }: SellerDetailPageProps) {
   // Properly extract the sellerId parameter using React.use()
   const { sellerId } = React.use(params);
@@ -82,10 +88,10 @@ export default function SellerDetailPage({ params }: SellerDetailPageProps) {
   // Loading state
   const isLoading = sellerLoading || categoriesLoading || menuItemsLoading;
 
-  // Filter menu items by category
-  const filteredMenuItems = activeCategory === 'all' 
-    ? menuItems 
-    : menuItems.filter(item => item.categoryId === activeCategory);
+  // Update filteredMenuItems logic
+  const filteredMenuItems = activeCategory === 'all'
+    ? menuItems
+    : menuItems.filter(item => getCategoryId(item.categoryId) === activeCategory);
 
   // Handle add to cart
 

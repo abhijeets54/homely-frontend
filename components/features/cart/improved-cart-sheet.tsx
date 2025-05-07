@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,7 @@ export function ImprovedCartSheet() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
   const { cart, cartItems, totalItems, totalPrice, updateCartItem, removeFromCart, setOpenCartCallback } = useCart();
+  const isInitialMount = useRef(true);
 
   // Function to open the cart sheet
   const openCartSheet = useCallback(() => {
@@ -33,17 +34,19 @@ export function ImprovedCartSheet() {
 
   // Register the open function with the cart provider
   useEffect(() => {
-    // Only set the callback once when the component mounts
-    setOpenCartCallback(openCartSheet);
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
     
-    // Cleanup when component unmounts
+    setOpenCartCallback(openCartSheet);
     return () => {
       setOpenCartCallback(() => {});
     };
   }, [setOpenCartCallback, openCartSheet]);
 
   // Function to handle checkout
-  const handleCheckout = () => {
+  const handleCheckout = useCallback(() => {
     if (!isAuthenticated) {
       toast.error('Please login to checkout');
       router.push('/login?redirectTo=/checkout');
@@ -52,10 +55,10 @@ export function ImprovedCartSheet() {
 
     router.push('/checkout');
     setOpen(false);
-  };
+  }, [isAuthenticated, router]);
 
   // Function to update item quantity
-  const handleUpdateQuantity = async (itemId: string, quantity: number) => {
+  const handleUpdateQuantity = useCallback(async (itemId: string, quantity: number) => {
     try {
       if (quantity <= 0) {
         await removeFromCart(itemId);
@@ -65,18 +68,13 @@ export function ImprovedCartSheet() {
     } catch (error) {
       toast.error('Failed to update item quantity');
     }
-  };
+  }, [removeFromCart, updateCartItem]);
 
   // Function to remove item
-  const handleRemoveItem = async (itemId: string) => {
+  const handleRemoveItem = useCallback(async (itemId: string) => {
     try {
-      // Show loading state
       setIsRemoving(itemId);
-      
-      // Call the removeFromCart function
       await removeFromCart(itemId);
-      
-      // Show success message
       toast.success('Item removed from cart');
     } catch (error) {
       console.error('Error removing item:', error);
@@ -84,12 +82,25 @@ export function ImprovedCartSheet() {
     } finally {
       setIsRemoving('');
     }
-  };
+  }, [removeFromCart]);
+
+  // Handle sheet open state changes
+  const handleOpenChange = useCallback((newOpen: boolean) => {
+    setOpen(newOpen);
+  }, []);
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>
-        <Button variant="outline" size="sm" className="relative">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="relative"
+          onClick={(e) => {
+            e.preventDefault();
+            handleOpenChange(true);
+          }}
+        >
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
             <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
             <line x1="3" y1="6" x2="21" y2="6"></line>

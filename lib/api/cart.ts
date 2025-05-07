@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Cart, CartItem } from '../types/models';
 import { client } from './client';
+import { useCartStore } from '../store/cartStore';
 
 // Cart API service
 export const cartApi = {
@@ -135,16 +136,27 @@ export const cartApi = {
 
 // Custom hooks for cart
 export const useCart = () => {
+  const { setCart } = useCartStore();
+  
   return useQuery({
     queryKey: ['cart'],
-    queryFn: () => cartApi.getCart(),
+    queryFn: async () => {
+      const cart = await cartApi.getCart();
+      setCart(cart); // Update store with latest cart data
+      return cart;
+    },
     retry: 1,
-    staleTime: 30000,
+    staleTime: 30000, // Consider data fresh for 30 seconds
+    gcTime: 5 * 60 * 1000, // Keep data in cache for 5 minutes
+    refetchOnWindowFocus: false, // Don't refetch when window regains focus
+    refetchOnMount: false, // Don't refetch when component mounts
+    refetchOnReconnect: false, // Don't refetch when reconnecting
   });
 };
 
 export const useAddToCart = () => {
   const queryClient = useQueryClient();
+  const { setCart } = useCartStore();
   
   return useMutation({
     mutationFn: ({ foodItemId, quantity }: { foodItemId: string; quantity: number }) => {
@@ -153,7 +165,8 @@ export const useAddToCart = () => {
     },
     onSuccess: (data) => {
       console.log('Cart updated successfully');
-      queryClient.invalidateQueries({ queryKey: ['cart'] });
+      setCart(data); // Update store with new cart data
+      queryClient.setQueryData(['cart'], data); // Update cache directly
     },
     onError: (error) => {
       console.error('useAddToCart mutation error:', error);

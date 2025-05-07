@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { Cart, CartItem, FoodItem } from '@/lib/types';
 import { LocalCart, LocalCartItem, simplifyFoodItem } from '@/lib/types/local-cart';
 import { cartApi } from '@/lib/api/cart';
@@ -28,8 +28,32 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<Cart | null>(null);
   const [localCart, setLocalCart] = useState<LocalCart | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [shouldOpenCart, setShouldOpenCart] = useState(false);
   const [openCartCallback, setOpenCartCallback] = useState<(() => void) | null>(null);
   const { user, isAuthenticated } = useAuth();
+
+  // Effect to handle cart opening
+  useEffect(() => {
+    if (shouldOpenCart && openCartCallback) {
+      openCartCallback();
+      setShouldOpenCart(false);
+    }
+  }, [shouldOpenCart, openCartCallback]);
+
+  // Memoize cart items
+  const cartItems = useMemo(() => {
+    return cart ? cart.items : localCart ? localCart.items : [];
+  }, [cart, localCart]);
+
+  // Memoize total items calculation
+  const totalItems = useMemo(() => {
+    return cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  }, [cartItems]);
+
+  // Memoize total price calculation
+  const totalPrice = useMemo(() => {
+    return cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  }, [cartItems]);
 
   const loadCart = async () => {
     // Only attempt to load cart if user is authenticated and is a customer
@@ -61,7 +85,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user, isAuthenticated]);
 
-  // Add item to local cart first, then sync with backend
   const addToCart = async (foodItem: FoodItem, quantity: number) => {
     try {
       // First, update the local cart state immediately for better UX
@@ -72,13 +95,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       
       // If user is not authenticated, just keep the local cart
       if (!isAuthenticated || !user) {
-        // Trigger cart opening with a slight delay to avoid React state update errors
-        if (openCartCallback) {
-          // Use window.setTimeout to avoid React rendering issues
-          window.setTimeout(() => {
-            openCartCallback();
-          }, 100);
-        }
+        // Set flag to open cart instead of calling directly
+        setShouldOpenCart(true);
         return;
       }
 
@@ -92,16 +110,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       try {
         console.log('Syncing cart with backend for item:', foodItem.id);
         const updatedCart = await cartApi.addToCart(foodItem.id, quantity);
-        // Ensure type compatibility by using type assertion
         setCart(updatedCart as Cart);
-        
-        // Open the cart after successfully adding the item to backend
-        if (openCartCallback) {
-          // Use window.setTimeout to avoid React rendering issues
-          window.setTimeout(() => {
-            openCartCallback();
-          }, 100);
-        }
+        // Set flag to open cart after successful sync
+        setShouldOpenCart(true);
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to add item to cart';
         toast.error(message);
@@ -204,13 +215,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         };
         
         setLocalCart(updatedLocalCart);
-        toast.success('Cart updated');
-        return;
       } catch (error) {
         console.error('Error updating local cart item:', error);
-        toast.error('Failed to update cart');
-        return;
+        toast.error('Failed to update item quantity');
       }
+      return;
     }
     
     // Handle backend cart update
@@ -223,11 +232,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(true);
       const updatedCart = await cartApi.updateCartItem(cartItemId, quantity);
       setCart(updatedCart as Cart);
-      toast.success('Cart updated');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to update cart';
-      toast.error(message);
-      console.error('Failed to update cart:', error);
+      console.error('Error updating cart item:', error);
+      toast.error('Failed to update item quantity');
     } finally {
       setIsLoading(false);
     }
@@ -304,18 +311,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     toast.success('Cart cleared');
   };
 
-  // Calculate total items and price safely
-  const totalItems = (cart || localCart)?.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
-  const totalPrice = (cart || localCart)?.items?.reduce((sum, item) => sum + (item.price * item.quantity), 0) || 0;
-
   return (
     <CartContext.Provider
       value={{
         cart: cart || localCart,
-        cartItems: cart ? cart.items : localCart ? localCart.items : [],
+        cartItems,
         isLoading,
-        totalItems: cart ? cart.totalItems : localCart ? localCart.totalItems : 0,
-        totalPrice: cart ? cart.totalAmount : localCart ? localCart.totalAmount : 0,
+        totalItems,
+        totalPrice,
         addToCart,
         updateCartItem,
         removeFromCart,

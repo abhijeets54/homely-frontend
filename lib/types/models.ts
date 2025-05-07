@@ -12,11 +12,26 @@ export interface Customer extends User {
   favoriteSellers?: string[];
 }
 
-export interface Seller extends User {
+export interface Seller {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  image?: string;
   status: 'open' | 'closed';
   rating?: number;
-  _id?: string; // Add _id property
-  image?: string; // Add image property
+  cuisine?: string[];
+  openingHours?: {
+    [key: string]: {
+      open: string;
+      close: string;
+    };
+  };
+  deliveryFee?: number;
+  minimumOrder?: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Menu Types
@@ -28,17 +43,19 @@ export interface Category {
 
 export interface FoodItem {
   id: string;
+  _id?: string;
   name: string;
-  categoryId: string;
-  restaurantId: string;
+  categoryId: string | { _id: string; name: string };
+  restaurantId: string | { _id: string; name: string; address: string; status: string };
   price: number;
-  imageUrl?: string;
+  imageUrl: string;
   isAvailable: boolean;
-  createdAt: string;
-  updatedAt?: string;
-  stock?: number;
+  quantity?: number;
   description?: string;
   dietaryInfo?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  stock?: number;
 }
 
 // Cart Types

@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -18,13 +17,15 @@ import { Icons } from '@/components/ui/icons';
 import { useCart } from '@/lib/hooks/use-cart';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { formatPrice } from '@/lib/utils';
+import { useCartStore } from '@/lib/store/cartStore';
+import { CartItem } from '@/lib/types/models';
 
 export function CartSheet() {
-  const [open, setOpen] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
   const { user } = useAuth();
   const cart = useCart();
+  const { isOpen, setIsOpen } = useCartStore();
 
   const handleCheckout = () => {
     if (!user) {
@@ -38,11 +39,11 @@ export function CartSheet() {
     }
 
     router.push('/checkout');
-    setOpen(false);
+    setIsOpen(false);
   };
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
         <Button
           variant="outline"
@@ -67,7 +68,7 @@ export function CartSheet() {
           <>
             <ScrollArea className="flex-1 pr-6">
               <div className="space-y-4">
-                {cart.items.map((item) => (
+                {cart.items.map((item: CartItem) => (
                   <div key={item.id} className="flex items-center space-x-4">
                     <div className="relative h-16 w-16 overflow-hidden rounded-lg">
                       <Image
@@ -93,7 +94,7 @@ export function CartSheet() {
                         }
                         disabled={item.quantity <= 1}
                       >
-                        <Icons.minus className="h-3 w-3" />
+                        <Icons.close className="h-3 w-3" />
                         <span className="sr-only">Remove one item</span>
                       </Button>
                       <span className="w-4 text-center">{item.quantity}</span>
@@ -152,7 +153,7 @@ export function CartSheet() {
             <Button
               variant="outline"
               className="mt-4"
-              onClick={() => setOpen(false)}
+              onClick={() => setIsOpen(false)}
             >
               Continue Shopping
             </Button>

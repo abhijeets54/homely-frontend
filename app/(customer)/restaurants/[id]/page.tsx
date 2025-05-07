@@ -17,6 +17,7 @@ import { Seller, Category, FoodItem } from '@/lib/types/models';
 import { MapPin, Star, Clock, Phone, Plus, Minus, ShoppingCart } from 'lucide-react';
 import axios from 'axios';
 import { useFormStatus } from 'react-dom';
+import { useParams } from 'next/navigation';
 
 // Function to emit cart event (will be called on the client)
 function emitCartEvent(success: boolean, message: string) {
@@ -82,14 +83,19 @@ async function addItemToCart(formData: FormData) {
   return { success, message };
 }
 
-export default function RestaurantDetailPage({ params }: { params: Promise<{ id: string }> | { id: string } }) {
-  // Unwrap params using React.use() to handle both Promise and direct object
-  const unwrappedParams = 'then' in params ? use(params) : params;
-  const { id } = unwrappedParams;
-  const { toast } = useToast();
+// Add this helper at the top, after imports
+const getCategoryId = (categoryId: any) =>
+  typeof categoryId === 'string'
+    ? categoryId
+    : categoryId?._id || categoryId?.id || '';
+
+export default function RestaurantDetailPage() {
+  const { id } = useParams();
+  const queryClient = useQueryClient();
   const { user, isAuthenticated } = useAuth();
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const { toast } = useToast();
   
   // Add to cart mutation
   const addToCart = useAddToCart();
@@ -316,115 +322,75 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
   return (
     <MainLayout>
       <div className="container mx-auto px-4 py-8">
-        {isLoading ? (
-          <>
-            <div className="mb-8">
-              <Skeleton className="h-64 w-full rounded-lg mb-4" />
-              <Skeleton className="h-10 w-1/3 mb-2" />
-              <Skeleton className="h-6 w-1/2 mb-4" />
-              <div className="flex space-x-4">
-                <Skeleton className="h-6 w-24" />
-                <Skeleton className="h-6 w-24" />
-                <Skeleton className="h-6 w-24" />
-              </div>
-            </div>
-            <Skeleton className="h-12 w-full mb-6" />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {Array.from({ length: 4 }).map((_, index) => (
-                <Skeleton key={index} className="h-40 w-full" />
-              ))}
-            </div>
-          </>
+        {restaurantLoading ? (
+          <div className="space-y-4">
+            <Skeleton className="h-48 w-full" />
+            <Skeleton className="h-8 w-1/3" />
+            <Skeleton className="h-4 w-1/4" />
+          </div>
         ) : restaurant ? (
           <>
-            {/* Restaurant Header */}
             <div className="mb-8">
-              <div className="relative h-64 w-full rounded-lg overflow-hidden mb-4">
+              <div className="relative h-48 md:h-64 rounded-lg overflow-hidden mb-4">
                 <Image
                   src={restaurant.image || '/placeholder-restaurant.jpg'}
                   alt={restaurant.name}
                   fill
                   className="object-cover"
                 />
-                <Badge 
-                  className={`absolute top-4 right-4 text-lg px-4 py-2 ${
-                    restaurant.status === 'open' ? 'bg-green-500' : 'bg-red-500'
-                  }`}
-                >
-                  {restaurant.status === 'open' ? 'Open' : 'Closed'}
-                </Badge>
               </div>
               <h1 className="text-3xl font-bold mb-2">{restaurant.name}</h1>
-              <div className="flex flex-wrap items-center gap-4 mb-4 text-gray-600">
+              <div className="flex flex-wrap gap-4 text-sm text-gray-600">
                 <div className="flex items-center">
-                  <MapPin className="h-5 w-5 mr-1" />
-                  <span>{restaurant.address || 'Location not available'}</span>
+                  <MapPin className="w-4 h-4 mr-1" />
+                  {restaurant.address}
                 </div>
                 <div className="flex items-center">
-                  <Star className="h-5 w-5 text-yellow-500 mr-1" />
-                  <span>{restaurant.rating ? `${restaurant.rating.toFixed(1)} / 5.0` : 'No ratings yet'}</span>
+                  <Star className="w-4 h-4 mr-1 text-yellow-400" />
+                  {restaurant.rating?.toFixed(1) || 'New'}
                 </div>
                 <div className="flex items-center">
-                  <Clock className="h-5 w-5 mr-1" />
-                  <span>Delivery: 30-45 min</span>
+                  <Clock className="w-4 h-4 mr-1" />
+                  {restaurant.status === 'open' ? 'Open' : 'Closed'}
                 </div>
-                {restaurant.phoneNumber && (
+                {restaurant.phone && (
                   <div className="flex items-center">
-                    <Phone className="h-5 w-5 mr-1" />
-                    <span>{restaurant.phoneNumber}</span>
+                    <Phone className="w-4 h-4 mr-1" />
+                    {restaurant.phone}
                   </div>
-                )}
-              </div>
-              <div className="flex space-x-2">
-                <Link href={`/restaurants/${id}/reviews`}>
-                  <Button variant="outline">See Reviews</Button>
-                </Link>
-                {isAuthenticated && user?.role === 'customer' && (
-                  <Link href="/cart">
-                    <Button variant="outline">
-                      <ShoppingCart className="h-5 w-5 mr-2" />
-                      View Cart
-                    </Button>
-                  </Link>
                 )}
               </div>
             </div>
 
-            {/* Menu Categories */}
-            {categories.length > 0 ? (
-              <Tabs 
-                value={selectedCategory || categories[0]?.id} 
-                onValueChange={setSelectedCategory}
-                className="mb-8"
-              >
-                <TabsList className="mb-6 flex flex-wrap h-auto">
+            {categoriesLoading ? (
+              <div className="space-y-4">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-40 w-full" />
+              </div>
+            ) : categories.length > 0 ? (
+              <Tabs value={selectedCategory || ''} onValueChange={setSelectedCategory}>
+                <TabsList className="mb-4">
                   {categories.map((category: Category) => (
                     <TabsTrigger key={category.id} value={category.id}>
                       {category.name}
                     </TabsTrigger>
                   ))}
                 </TabsList>
-                
+
                 {categories.map((category: Category) => (
                   <TabsContent key={category.id} value={category.id}>
-                    <h2 className="text-2xl font-semibold mb-4">{category.name}</h2>
-                    
                     {foodItemsLoading ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {Array.from({ length: 4 }).map((_, index) => (
-                          <Skeleton key={index} className="h-40 w-full" />
+                        {[1, 2, 3, 4].map((i) => (
+                          <Skeleton key={i} className="h-48 w-full" />
                         ))}
                       </div>
-                    ) : foodItems.length === 0 ? (
-                      <Card className="p-6 text-center">
-                        <CardTitle className="mb-2">No Items Available</CardTitle>
-                        <CardDescription>
-                          This category doesn't have any food items yet. Please check back later or try another category.
-                        </CardDescription>
-                      </Card>
-                    ) : (
+                    ) : foodItems.length > 0 ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {foodItems.map((item: FoodItem) => (
+                        {(category.id === 'all'
+                          ? foodItems
+                          : foodItems.filter((item: FoodItem) => getCategoryId(item.categoryId) === category.id)
+                        ).map((item: FoodItem) => (
                           <Card key={item.id} className={`overflow-hidden ${!item.isAvailable ? 'opacity-60' : ''}`}>
                             <div className="flex flex-col md:flex-row">
                               <div className="relative h-40 md:h-auto md:w-1/3">
@@ -450,9 +416,8 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
                                   </div>
                                   <p className="font-bold">₹{item.price.toFixed(2)}</p>
                                 </div>
-                                
-                                {item.isAvailable ? (
-                                  <div className="mt-4 flex justify-between items-center">
+                                {item.isAvailable && (
+                                  <div className="mt-4 flex items-center justify-between">
                                     <div className="flex items-center space-x-2">
                                       <Button
                                         variant="outline"
@@ -462,7 +427,7 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
                                       >
                                         <Minus className="h-4 w-4" />
                                       </Button>
-                                      <span>{quantities[item.id] || 0}</span>
+                                      <span className="w-8 text-center">{quantities[item.id] || 0}</span>
                                       <Button
                                         variant="outline"
                                         size="icon"
@@ -471,48 +436,27 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
                                         <Plus className="h-4 w-4" />
                                       </Button>
                                     </div>
-                                    <form 
-                                      action={async (formData) => {
-                                        console.log('Form submitted with data', Object.fromEntries(formData.entries()));
-                                        const result = await addItemToCart(formData);
-                                        console.log('Server action result:', result);
-                                        if (result?.success) {
-                                          // Reset quantity after adding to cart
-                                          setQuantities(prev => ({ ...prev, [item.id]: 0 }));
-                                          // Emit the event for client-side handling
-                                          emitCartEvent(result.success, result.message);
-                                        }
-                                      }}
+                                    <Button
+                                      onClick={() => handleAddToCart(item)}
+                                      disabled={!quantities[item.id]}
                                     >
-                                      <input type="hidden" name="foodItemId" value={item.id} />
-                                      <input type="hidden" name="quantity" value={quantities[item.id] || 0} />
-                                      <input type="hidden" name="itemName" value={item.name} />
-                                      <input 
-                                        type="hidden" 
-                                        name="token" 
-                                        value={typeof window !== 'undefined' ? localStorage.getItem('token') || '' : ''} 
-                                      />
-                                      <Button 
-                                        type="submit" 
-                                        disabled={!quantities[item.id]}
-                                        onClick={() => {
-                                          console.log('Add to Cart button clicked for item:', item.id);
-                                        }}
-                                      >
-                                        Add to Cart
-                                      </Button>
-                                    </form>
+                                      <ShoppingCart className="h-4 w-4 mr-2" />
+                                      Add to Cart
+                                    </Button>
                                   </div>
-                                ) : (
-                                  <Badge variant="destructive" className="mt-4">
-                                    Out of Stock
-                                  </Badge>
                                 )}
                               </div>
                             </div>
                           </Card>
                         ))}
                       </div>
+                    ) : (
+                      <Card className="p-6 text-center">
+                        <CardTitle className="mb-2">No Items Available</CardTitle>
+                        <CardDescription>
+                          This category doesn't have any food items yet.
+                        </CardDescription>
+                      </Card>
                     )}
                   </TabsContent>
                 ))}

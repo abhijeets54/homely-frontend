@@ -70,7 +70,13 @@ export const foodApi = {
   getFoodItemsByCategory: async (categoryId: string): Promise<FoodItem[]> => {
     try {
       const response = await apiClient.get<FoodItem[]>(`/api/food/category/${categoryId}`);
-      return response.data;
+      // Map _id to id for consistency
+      return response.data.map(item => ({
+        ...item,
+        id: item._id || item.id,
+        categoryId: item.categoryId._id || item.categoryId,
+        restaurantId: item.restaurantId._id || item.restaurantId
+      }));
     } catch (error) {
       console.error(`Error fetching food items for category ${categoryId}:`, error);
       return [];

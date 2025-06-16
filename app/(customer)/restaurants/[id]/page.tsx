@@ -18,6 +18,8 @@ import { MapPin, Star, Clock, Phone, Plus, Minus, ShoppingCart } from 'lucide-re
 import axios from 'axios';
 import { useFormStatus } from 'react-dom';
 import { useParams } from 'next/navigation';
+import { getSellerImageUrl, getFullImageUrl } from '@/lib/utils/image';
+import CloudinaryImage from '@/components/CloudinaryImage';
 
 // Function to emit cart event (will be called on the client)
 function emitCartEvent(success: boolean, message: string) {
@@ -90,7 +92,8 @@ const getCategoryId = (categoryId: any) =>
     : categoryId?._id || categoryId?.id || '';
 
 export default function RestaurantDetailPage() {
-  const { id } = useParams();
+  const params = useParams();
+  const id = params.id as string; // Explicitly cast id to string
   const queryClient = useQueryClient();
   const { user, isAuthenticated } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState<string>('');
@@ -332,8 +335,8 @@ export default function RestaurantDetailPage() {
           <>
             <div className="mb-8">
               <div className="relative h-48 md:h-64 rounded-lg overflow-hidden mb-4">
-                <Image
-                  src={restaurant.image || '/placeholder-restaurant.jpg'}
+                <CloudinaryImage
+                  src={getSellerImageUrl(restaurant.imageUrl || restaurant.image)}
                   alt={restaurant.name}
                   fill
                   className="object-cover"
@@ -394,8 +397,8 @@ export default function RestaurantDetailPage() {
                           <Card key={item.id} className={`overflow-hidden ${!item.isAvailable ? 'opacity-60' : ''}`}>
                             <div className="flex flex-col md:flex-row">
                               <div className="relative h-40 md:h-auto md:w-1/3">
-                                <Image
-                                  src={item.imageUrl || '/placeholder-food.jpg'}
+                                <CloudinaryImage
+                                  src={getFullImageUrl(item.imageUrl)}
                                   alt={item.name}
                                   fill
                                   className="object-cover"

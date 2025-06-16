@@ -58,41 +58,13 @@ export default function CartPage() {
 
   // Handle checkout
   const handleCheckout = async () => {
-    if (!isAuthenticated) {
-      toast.error('Please log in to checkout');
-      router.push('/login');
-      return;
-    }
-
-    if (cart.items.length === 0) {
+    if (!cart || cart.items.length === 0) {
       toast.error('Your cart is empty');
       return;
     }
 
-    try {
-      setIsCheckingOut(true);
-      
-      // Create order
-      const orderData = {
-        items: cart.items,
-        specialInstructions,
-        deliveryFee,
-        total
-      };
-      
-      await customerApi.createOrder(orderData);
-      
-      // Clear cart after successful order
-      clearCart();
-      
-      toast.success('Order placed successfully!');
-      router.push('/customer/orders');
-    } catch (error) {
-      console.error('Checkout error:', error);
-      toast.error('Failed to place order. Please try again.');
-    } finally {
-      setIsCheckingOut(false);
-    }
+    // Navigate to checkout page directly
+    router.push('/checkout');
   };
 
   if (!isAuthenticated && !authLoading) {

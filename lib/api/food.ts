@@ -8,7 +8,18 @@ export const foodApi = {
   getSellers: async (): Promise<Seller[]> => {
     try {
       const response = await apiClient.get<Seller[]>('/api/seller');
-      console.log('Fetched sellers:', response.data); // Log the response data
+      
+      // Enhanced logging to debug seller data structure
+      console.log('Fetched sellers data structure:', {
+        count: response.data.length,
+        firstSeller: response.data[0] ? {
+          id: response.data[0].id,
+          _id: response.data[0]._id,
+          name: response.data[0].name,
+          keys: Object.keys(response.data[0])
+        } : 'No sellers found'
+      });
+      
       return response.data;
     } catch (error) {
       console.error('Error fetching sellers:', error);
@@ -21,17 +32,40 @@ export const foodApi = {
    * Get seller by ID
    */
   getSellerById: async (sellerId: string): Promise<Seller> => {
-    if (!sellerId) {
-      console.error('Seller ID is undefined');
-      throw new Error('Seller ID is required');
+    // Enhanced validation for sellerId
+    if (!sellerId || sellerId === 'undefined' || sellerId === 'null') {
+      const errorMessage = 'Invalid seller ID provided';
+      console.error(errorMessage, { sellerId });
+      throw new Error(errorMessage);
     }
 
     try {
-      const response = await apiClient.get(`http://localhost:5000/api/seller/${sellerId}`);
+      console.log(`Fetching seller with ID: ${sellerId}`);
+      const response = await apiClient.get<Seller>(`/api/seller/${sellerId}`);
+      
+      // Validate response data
+      if (!response.data) {
+        throw new Error('No seller data returned from API');
+      }
+      
       return response.data;
-    } catch (error) {
-      console.error('Error fetching seller:', error);
-      throw new Error('Error fetching seller data');
+    } catch (error: any) {
+      // Provide more detailed error information
+      const statusCode = error.response?.status;
+      const responseData = error.response?.data;
+      
+      console.error('Error fetching seller:', { 
+        sellerId,
+        statusCode,
+        responseData,
+        message: error.message
+      });
+      
+      if (statusCode === 404) {
+        throw new Error('Seller not found');
+      }
+      
+      throw new Error(`Error fetching seller data: ${error.message}`);
     }
   },
 
@@ -39,6 +73,12 @@ export const foodApi = {
    * Get categories by seller ID
    */
   getCategoriesBySeller: async (sellerId: string): Promise<Category[]> => {
+    // Add validation for sellerId
+    if (!sellerId || sellerId === 'undefined' || sellerId === 'null') {
+      console.error('Invalid seller ID for fetching categories', { sellerId });
+      return [];
+    }
+    
     try {
       const response = await apiClient.get<Category[]>(`/api/category/seller/${sellerId}`);
       return response.data;
@@ -52,6 +92,12 @@ export const foodApi = {
    * Get food items by seller ID
    */
   getFoodItemsBySeller: async (sellerId: string): Promise<FoodItem[]> => {
+    // Add validation for sellerId
+    if (!sellerId || sellerId === 'undefined' || sellerId === 'null') {
+      console.error('Invalid seller ID for fetching food items', { sellerId });
+      return [];
+    }
+    
     try {
       // WORKAROUND: Using query parameter instead of path segment to avoid MongoDB ObjectId casting error
       // Original endpoint '/api/food/seller/${sellerId}' causes "Cast to ObjectId failed for value 'seller'" error
@@ -74,8 +120,8 @@ export const foodApi = {
       return response.data.map(item => ({
         ...item,
         id: item._id || item.id,
-        categoryId: item.categoryId._id || item.categoryId,
-        restaurantId: item.restaurantId._id || item.restaurantId
+        categoryId: typeof item.categoryId === 'object' && item.categoryId?._id ? item.categoryId._id : item.categoryId,
+        restaurantId: typeof item.restaurantId === 'object' && item.restaurantId?._id ? item.restaurantId._id : item.restaurantId
       }));
     } catch (error) {
       console.error(`Error fetching food items for category ${categoryId}:`, error);
@@ -121,4 +167,4 @@ export const foodApi = {
       return { categories: [], items: [] };
     }
   }
-}; 
+};

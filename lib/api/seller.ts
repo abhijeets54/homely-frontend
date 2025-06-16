@@ -1,5 +1,6 @@
 import { Category, FoodItem, Order, Seller } from '../types/models';
 import apiClient from './client';
+import { formatImageUrlForBackend } from '@/lib/utils/image';
 
 export const sellerApi = {
   /**
@@ -18,9 +19,26 @@ export const sellerApi = {
   /**
    * Update seller profile
    */
-  updateProfile: async (data: Partial<Seller>): Promise<Seller> => {
+  updateProfile: async (data: any): Promise<Seller> => {
     try {
-      const response = await apiClient.put<Seller>('/api/seller/profile', data);
+      console.log('Seller API - updateProfile called with data:', data);
+      
+      // Ensure the data object is properly structured before sending to backend
+      const formattedData: Record<string, any> = { ...data };
+      
+      // Convert minimumOrder and deliveryRadius to numbers if they exist
+      if (formattedData.minimumOrder !== undefined) {
+        formattedData.minimumOrder = Number(formattedData.minimumOrder);
+      }
+      
+      if (formattedData.deliveryRadius !== undefined) {
+        formattedData.deliveryRadius = Number(formattedData.deliveryRadius);
+      }
+      
+      console.log('Seller API - formatted data for backend:', formattedData);
+      
+      const response = await apiClient.put<Seller>('/api/seller/profile', formattedData);
+      console.log('Seller API - update response:', response);
       return response.data;
     } catch (error) {
       console.error('Error updating seller profile:', error);
@@ -286,6 +304,11 @@ export const sellerApi = {
    */
   updateMenuItem: async (itemId: string, data: Partial<FoodItem>): Promise<FoodItem> => {
     try {
+      // Format imageUrl if provided
+      if (data.imageUrl) {
+        data.imageUrl = formatImageUrlForBackend(data.imageUrl);
+      }
+      
       const response = await apiClient.put<FoodItem>(`/api/food/${itemId}`, data);
       return response.data;
     } catch (error) {

@@ -14,14 +14,20 @@ export interface Customer extends User {
 
 export interface Seller {
   id: string;
+  _id?: string;
   name: string;
   email: string;
   phone?: string;
   address?: string;
   image?: string;
+  imageUrl?: string;
+  imagePublicId?: string;
   status: 'open' | 'closed';
   rating?: number;
   cuisine?: string[];
+  description?: string;
+  openingTime?: string;
+  closingTime?: string;
   openingHours?: {
     [key: string]: {
       open: string;
@@ -30,6 +36,7 @@ export interface Seller {
   };
   deliveryFee?: number;
   minimumOrder?: number;
+  deliveryRadius?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -49,6 +56,7 @@ export interface FoodItem {
   restaurantId: string | { _id: string; name: string; address: string; status: string };
   price: number;
   imageUrl: string;
+  imagePublicId?: string;
   isAvailable: boolean;
   quantity?: number;
   description?: string;
@@ -105,16 +113,7 @@ export interface OrderItem {
   foodItem?: FoodItem;
 }
 
-// Delivery Types
-export interface DeliveryPartner extends User {
-  vehicleType: string;
-  isAvailable?: boolean;
-  currentLocation?: {
-    lat: number;
-    lng: number;
-  };
-}
-
+// Delivery Assignment Type
 export interface DeliveryAssignment {
   id: string;
   orderId: string;
@@ -124,7 +123,6 @@ export interface DeliveryAssignment {
   createdAt: string;
   updatedAt?: string;
   order?: Order;
-  deliveryPartner?: DeliveryPartner;
 }
 
 // Payment Types

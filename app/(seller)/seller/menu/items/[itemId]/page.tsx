@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import Image from 'next/image';
 import { sellerApi } from '@/lib/api';
 import { foodItemSchema, FoodItemFormValues } from '@/lib/validation/food';
 import { MainLayout } from '@/components/layouts';
@@ -19,6 +20,9 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/providers/auth-provider';
+import { getFullImageUrl } from '@/lib/utils/image';
+import ImageUploader from '@/components/ImageUploader';
+import CloudinaryImage from '@/components/CloudinaryImage';
 
 interface EditFoodItemPageProps {
   params: {
@@ -77,11 +81,17 @@ export default function EditFoodItemPage({ params }: { params: { itemId: string 
   useEffect(() => {
     if (foodItem && foodItem.length > 0) {
       const firstFoodItem = foodItem[0];
+      
+      // Handle categoryId which might be an object with _id property
+      const categoryId = typeof firstFoodItem.categoryId === 'object' && firstFoodItem.categoryId?._id 
+        ? firstFoodItem.categoryId._id 
+        : firstFoodItem.categoryId;
+      
       form.reset({
         name: firstFoodItem.name,
         description: firstFoodItem.description || '',
         price: firstFoodItem.price,
-        categoryId: firstFoodItem.categoryId,
+        categoryId: categoryId as string,
         imageUrl: firstFoodItem.imageUrl || '',
         isAvailable: firstFoodItem.isAvailable,
         stock: firstFoodItem.stock,
@@ -271,12 +281,31 @@ export default function EditFoodItemPage({ params }: { params: { itemId: string 
 
                   {/* Image URL */}
                   <div className="space-y-2">
-                    <Label htmlFor="imageUrl">Image URL</Label>
-                    <Input
-                      id="imageUrl"
-                      placeholder="Enter image URL"
-                      {...form.register('imageUrl')}
+                    <Label htmlFor="imageUrl">Item Image</Label>
+                    {foodItem && foodItem.length > 0 && foodItem[0].imageUrl && (
+                      <div className="mb-4">
+                        <p className="text-sm mb-2">Current Image:</p>
+                        <div className="relative h-40 w-full rounded-md overflow-hidden">
+                          <CloudinaryImage
+                            src={foodItem[0].imageUrl}
+                            alt={foodItem[0].name || 'Food item'}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      </div>
+                    )}
+                    <ImageUploader
+                      onImageUpload={(imageUrl) => {
+                        form.setValue('imageUrl', imageUrl);
+                      }}
+                      currentImage={foodItem && foodItem.length > 0 ? foodItem[0].imageUrl : ''}
+                      folder="food"
+                      buttonText="Upload Food Image"
                     />
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Recommended image size: 800x600 pixels
+                    </p>
                     {form.formState.errors.imageUrl && (
                       <p className="text-sm text-red-500">{form.formState.errors.imageUrl.message}</p>
                     )}

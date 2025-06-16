@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import AuthProvider from '@/providers/auth-provider';
+import { CartProvider as LegacyCartProvider } from '@/providers/cart-provider';
 import { CartProvider } from '@/components/providers/cart-provider';
 import { QueryProvider } from '@/components/providers/query-provider';
 import { ThemeProvider } from '@/components/providers/theme-provider';
@@ -31,14 +32,16 @@ export default function RootLayout({
         >
           <QueryProvider>
             <AuthProvider>
-              <CartProvider>
-                <div className="min-h-screen flex flex-col">
-                  <main className="flex-1">
-                    {children}
-                  </main>
-                </div>
-                <Toaster />
-              </CartProvider>
+              <LegacyCartProvider>
+                <CartProvider>
+                  <div className="min-h-screen flex flex-col">
+                    <main className="flex-1">
+                      {children}
+                    </main>
+                  </div>
+                  <Toaster />
+                </CartProvider>
+              </LegacyCartProvider>
             </AuthProvider>
           </QueryProvider>
         </ThemeProvider>

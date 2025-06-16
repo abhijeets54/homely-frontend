@@ -51,6 +51,7 @@ const customerSellerSchema = z.object({
   address: z.string().min(5, 'Please enter a valid address'),
   phoneNumber: z.string().min(10, 'Please enter a valid phone number'),
   role: z.enum(['customer', 'seller']),
+  imageUrl: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -65,7 +66,7 @@ const registerSchema = z.discriminatedUnion('role', [
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export function RegisterForm() {
-  const { register, isLoading, error, clearError } = useAuth();
+  const { register: registerUser, isLoading, error, clearError } = useAuth();
   const { toast } = useToast();
   const [selectedRole, setSelectedRole] = React.useState<string>('customer');
 
@@ -78,7 +79,8 @@ export function RegisterForm() {
       confirmPassword: '',
       address: '',
       phoneNumber: '',
-      role: 'customer',
+      role: 'customer' as const,
+      imageUrl: '',
     },
   });
 
@@ -108,7 +110,7 @@ export function RegisterForm() {
       // Remove confirmPassword from the data sent to the API
       const { confirmPassword, ...registrationData } = values;
       
-      await register(registrationData);
+      await registerUser(registrationData);
       
       toast({
         title: 'Success',
@@ -250,7 +252,7 @@ export function RegisterForm() {
               <FormLabel>Register as</FormLabel>
               <Select
                 disabled={isLoading}
-                onValueChange={(value) => {
+                onValueChange={(value: string) => {
                   field.onChange(value);
                   form.setValue('role', value as any);
                 }}
@@ -295,6 +297,29 @@ export function RegisterForm() {
                     <SelectItem value="car">Car</SelectItem>
                   </SelectContent>
                 </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+        
+        {form.watch('role') === 'seller' && (
+          <FormField
+            control={form.control}
+            name="imageUrl"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Restaurant Cover Image</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Enter image filename (e.g. restaurant.jpg)"
+                    disabled={isLoading}
+                    {...field}
+                  />
+                </FormControl>
+                <p className="text-xs text-muted-foreground">
+                  Enter just the filename. The image should be in the uploads/seller folder.
+                </p>
                 <FormMessage />
               </FormItem>
             )}

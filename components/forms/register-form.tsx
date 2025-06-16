@@ -14,6 +14,9 @@ import { useAuth } from '@/providers/auth-provider';
 import { UserRole } from '@/lib/types';
 import { Icons } from '@/components/ui/icons';
 
+// Define a more specific role type for registration
+type RegisterRole = 'customer' | 'seller';
+
 const registerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email address'),
@@ -21,20 +24,11 @@ const registerSchema = z.object({
   confirmPassword: z.string().min(6, 'Please confirm your password'),
   phoneNumber: z.string().min(10, 'Please enter a valid phone number').max(15, 'Phone number is too long'),
   address: z.string().min(5, 'Please enter your complete address'),
-  role: z.enum(['customer', 'seller', 'delivery'] as const),
-  vehicleType: z.string().optional(),
+  role: z.enum(['customer', 'seller'] as const),
+  imageUrl: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ['confirmPassword'],
-}).refine((data) => {
-  // If role is delivery, vehicleType is required
-  if (data.role === 'delivery') {
-    return !!data.vehicleType;
-  }
-  return true;
-}, {
-  message: "Vehicle type is required for delivery partners",
-  path: ['vehicleType'],
 });
 
 type RegisterFormData = z.infer<typeof registerSchema>;
@@ -46,7 +40,15 @@ export function RegisterForm() {
   const { register: registerUser } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
-  const defaultRole = (searchParams.get('userType') as UserRole) || 'customer';
+  // Convert any role to a valid register role
+  const getValidRole = (role: string | null): RegisterRole => {
+    if (role === 'customer' || role === 'seller') {
+      return role;
+    }
+    return 'customer'; // Default to customer for any other role
+  };
+
+  const defaultRole = getValidRole(searchParams.get('userType'));
 
   const {
     register,
@@ -112,7 +114,7 @@ export function RegisterForm() {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="mb-4">
         <Label className="block mb-2">Account Type</Label>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           <div>
             <Label
               htmlFor="customer"
@@ -145,23 +147,6 @@ export function RegisterForm() {
                 {...register('role')}
               />
               <span className="text-sm font-medium">Seller</span>
-            </Label>
-          </div>
-          <div>
-            <Label
-              htmlFor="delivery"
-              className={`flex flex-col items-center justify-between rounded-md border-2 ${
-                selectedRole === 'delivery' ? 'border-primary' : 'border-muted'
-              } bg-transparent p-4 hover:bg-muted cursor-pointer`}
-            >
-              <input
-                type="radio"
-                id="delivery"
-                value="delivery"
-                className="sr-only"
-                {...register('role')}
-              />
-              <span className="text-sm font-medium">Delivery Partner</span>
             </Label>
           </div>
         </div>
@@ -243,11 +228,11 @@ export function RegisterForm() {
 
       <div className="space-y-2">
         <Label htmlFor="address">
-          {selectedRole === 'seller' ? 'Business Address' : selectedRole === 'delivery' ? 'Delivery Address' : 'Delivery Address'}
+          {selectedRole === 'seller' ? 'Business Address' : 'Delivery Address'}
         </Label>
         <Input
           id="address"
-          placeholder={`Enter your ${selectedRole === 'seller' ? 'business' : selectedRole === 'delivery' ? 'delivery' : 'delivery'} address`}
+          placeholder={`Enter your ${selectedRole === 'seller' ? 'business' : 'delivery'} address`}
           disabled={isLoading}
           {...register('address')}
         />
@@ -256,18 +241,18 @@ export function RegisterForm() {
         )}
       </div>
 
-      {selectedRole === 'delivery' && (
+      {selectedRole === 'seller' && (
         <div className="space-y-2">
-          <Label htmlFor="vehicleType">Vehicle Type</Label>
+          <Label htmlFor="imageUrl">Restaurant Cover Image</Label>
           <Input
-            id="vehicleType"
-            placeholder="Enter your vehicle type (e.g., Bike, Car, Scooter)"
+            id="imageUrl"
+            placeholder="Enter image filename (e.g. restaurant.jpg)"
             disabled={isLoading}
-            {...register('vehicleType')}
+            {...register('imageUrl')}
           />
-          {errors.vehicleType && (
-            <p className="text-sm text-red-500">{errors.vehicleType.message}</p>
-          )}
+          <p className="text-xs text-muted-foreground">
+            Enter just the filename. The image should be in the uploads/seller folder.
+          </p>
         </div>
       )}
 

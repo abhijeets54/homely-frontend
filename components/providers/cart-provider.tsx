@@ -5,8 +5,8 @@ import { Cart, CartItem, FoodItem } from '@/lib/types';
 import { LocalCart, LocalCartItem, simplifyFoodItem } from '@/lib/types/local-cart';
 import { cartApi } from '@/lib/api/cart';
 import { useAuth } from '@/providers/auth-provider';
-import { User } from '@/lib/types/auth';
 import { toast } from 'sonner';
+import { useCartStore } from '@/lib/store/cartStore';
 
 interface CartContextType {
   cart: Cart | LocalCart | null;
@@ -22,43 +22,64 @@ interface CartContextType {
   setOpenCartCallback: (callback: () => void) => void;
 }
 
-const CartContext = createContext<CartContextType | undefined>(undefined);
+// Create a default value for the context to prevent undefined errors
+const defaultCartContext: CartContextType = {
+  cart: null,
+  cartItems: [],
+  isLoading: false,
+  totalItems: 0,
+  totalPrice: 0,
+  addToCart: async () => {},
+  updateCartItem: async () => {},
+  removeFromCart: async () => {},
+  clearCart: async () => {},
+  openCartCallback: null,
+  setOpenCartCallback: () => {},
+};
+
+// Create the context with a default value
+const CartContext = createContext<CartContextType>(defaultCartContext);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [cart, setCart] = useState<Cart | null>(null);
-  const [localCart, setLocalCart] = useState<LocalCart | null>(null);
+  // For authenticated users with backend cart
+  const [serverCart, setServerCart] = useState<Cart | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [shouldOpenCart, setShouldOpenCart] = useState(false);
   const [openCartCallback, setOpenCartCallback] = useState<(() => void) | null>(null);
   const { user, isAuthenticated } = useAuth();
-
-  // Effect to handle cart opening
+  
+  // Get the zustand store - this will be our primary cart implementation
+  const cartStore = useCartStore();
+  
+  // Ensure Zustand store is hydrated on mount
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // This is needed for zustand persist hydration
+      useCartStore.persist.rehydrate();
+    }
+  }, []);
+
+  // Effect to handle cart opening - only when items are explicitly added
+  useEffect(() => {
+    // Only open the cart when shouldOpenCart is true and we have a callback
+    // This should only happen when addToCart is called
     if (shouldOpenCart && openCartCallback) {
       openCartCallback();
       setShouldOpenCart(false);
     }
   }, [shouldOpenCart, openCartCallback]);
+  
+  // Reset shouldOpenCart on mount to prevent cart from opening on page reload
+  useEffect(() => {
+    // This ensures the cart won't open on page load/navigation
+    setShouldOpenCart(false);
+  }, []);
 
-  // Memoize cart items
-  const cartItems = useMemo(() => {
-    return cart ? cart.items : localCart ? localCart.items : [];
-  }, [cart, localCart]);
-
-  // Memoize total items calculation
-  const totalItems = useMemo(() => {
-    return cartItems.reduce((sum, item) => sum + item.quantity, 0);
-  }, [cartItems]);
-
-  // Memoize total price calculation
-  const totalPrice = useMemo(() => {
-    return cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  }, [cartItems]);
-
-  const loadCart = async () => {
+  // Load server cart for authenticated users
+  const loadServerCart = async () => {
     // Only attempt to load cart if user is authenticated and is a customer
     if (!isAuthenticated || !user || user.role !== 'customer') {
-      setCart(null);
+      setServerCart(null);
       return;
     }
 
@@ -66,11 +87,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(true);
       // The backend uses the token to identify the user
       const cartData = await cartApi.getCart();
-      setCart(cartData as Cart);
+      // Use type assertion to handle any inconsistencies between Cart types
+      setServerCart(cartData as unknown as Cart);
     } catch (error) {
       console.error('Failed to load cart:', error);
       // Don't show error toast on initial load
-      setCart(null);
+      setServerCart(null);
     } finally {
       setIsLoading(false);
     }
@@ -79,159 +101,109 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Only load cart if user is authenticated and is a customer
     if (isAuthenticated && user && user.role === 'customer') {
-      loadCart();
+      loadServerCart();
     } else {
-      setCart(null);
+      setServerCart(null);
     }
   }, [user, isAuthenticated]);
 
+  // Get cart items either from server cart or Zustand store
+  const cartItems = useMemo(() => {
+    if (serverCart) {
+      return serverCart.items;
+    } else {
+      // Convert Zustand cart items to LocalCartItem format
+      return cartStore.items.map(item => ({
+        id: item.id,
+        foodItemId: item.foodItemId,
+        foodItem: item.foodItem as any,
+        quantity: item.quantity,
+        price: item.price
+      }));
+    }
+  }, [serverCart, cartStore.items]);
+
+  // Calculate total items
+  const totalItems = useMemo(() => {
+    return cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  }, [cartItems]);
+
+  // Calculate total price
+  const totalPrice = useMemo(() => {
+    return cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  }, [cartItems]);
+
+  // Add item to cart
   const addToCart = async (foodItem: FoodItem, quantity: number) => {
     try {
-      // First, update the local cart state immediately for better UX
-      const updatedLocalCart = updateLocalCartState(foodItem, quantity);
+      // First update Zustand store for immediate UI feedback
+      cartStore.addItem(foodItem, quantity);
       
       // Success notification
       toast.success(`${foodItem.name} added to cart`);
       
-      // If user is not authenticated, just keep the local cart
-      if (!isAuthenticated || !user) {
-        // Set flag to open cart instead of calling directly
-        setShouldOpenCart(true);
-        return;
-      }
+      // If user is authenticated, sync with backend
+      if (isAuthenticated && user) {
+        if (user.role !== 'customer') {
+          toast.error('Only customers can add items to cart');
+          return;
+        }
 
-      if (user.role !== 'customer') {
-        toast.error('Only customers can add items to cart');
-        return;
+        // Sync with the backend
+        setIsLoading(true);
+        try {
+          console.log('Syncing cart with backend for item:', foodItem.id);
+          const updatedCart = await cartApi.addToCart(foodItem.id, quantity);
+          // Use type assertion to handle any inconsistencies between Cart types
+          setServerCart(updatedCart as unknown as Cart);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Failed to add item to cart';
+          toast.error(message);
+          console.error('Failed to add to cart:', error);
+        } finally {
+          setIsLoading(false);
+        }
       }
-
-      // Then, sync with the backend
-      setIsLoading(true);
-      try {
-        console.log('Syncing cart with backend for item:', foodItem.id);
-        const updatedCart = await cartApi.addToCart(foodItem.id, quantity);
-        setCart(updatedCart as Cart);
-        // Set flag to open cart after successful sync
-        setShouldOpenCart(true);
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'Failed to add item to cart';
-        toast.error(message);
-        console.error('Failed to add to cart:', error);
-      } finally {
-        setIsLoading(false);
-      }
+      
+      // Set flag to open cart
+      setShouldOpenCart(true);
     } catch (err) {
       console.error('Error in addToCart:', err);
       toast.error('Failed to add item to cart');
     }
   };
-  
-  // Helper function to update local cart state
-  const updateLocalCartState = (foodItem: FoodItem, quantity: number): LocalCart => {
-    // Create a copy of the current local cart or initialize a new one
-    const currentLocalCart: LocalCart = localCart || {
-      id: 'local-cart',
-      items: [],
-      totalItems: 0,
-      totalAmount: 0
-    };
-    
-    // Check if the item already exists in the cart
-    const existingItemIndex = currentLocalCart.items.findIndex(
-      item => item.foodItemId === foodItem.id || item.foodItem?.id === foodItem.id
-    );
-    
-    // Create a deep copy of the cart items
-    const updatedItems = [...currentLocalCart.items];
-    
-    if (existingItemIndex >= 0) {
-      // Update existing item
-      const existingItem = {...updatedItems[existingItemIndex]};
-      existingItem.quantity += quantity;
-      updatedItems[existingItemIndex] = existingItem;
-    } else {
-      // Add new item
-      updatedItems.push({
-        id: `local-${Date.now()}`,
-        foodItemId: foodItem.id,
-        foodItem: simplifyFoodItem(foodItem),
-        quantity: quantity,
-        price: foodItem.price
-      });
-    }
-    
-    // Calculate new totals
-    const totalItems = updatedItems.reduce((sum, item) => sum + item.quantity, 0);
-    const totalAmount = updatedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    
-    // Create the updated cart
-    const updatedLocalCart = {
-      ...currentLocalCart,
-      items: updatedItems,
-      totalItems,
-      totalAmount
-    };
-    
-    // Update state
-    setLocalCart(updatedLocalCart);
-    
-    return updatedLocalCart;
-  };
 
+  // Update cart item quantity
   const updateCartItem = async (cartItemId: string, quantity: number) => {
-    // Check if this is a local cart item (id starts with 'local-')
-    if (cartItemId.startsWith('local-')) {
-      try {
-        // Handle local cart update
-        if (!localCart) return;
+    try {
+      // Handle local cart update through Zustand
+      if (cartItemId.startsWith('local-') || !isAuthenticated) {
+        // Find matching item in Zustand store
+        const zustandItem = cartStore.items.find(item => {
+          // Match either by id or by foodItemId
+          return item.id === cartItemId || 
+                 (cartItemId.includes(item.foodItemId) || 
+                 (typeof item.foodItem === 'object' && item.foodItem?.id === cartItemId));
+        });
         
-        // Create a deep copy of the cart items
-        const updatedItems = [...localCart.items];
-        
-        // Find the item to update
-        const itemIndex = updatedItems.findIndex(item => item.id === cartItemId);
-        
-        if (itemIndex === -1) {
-          console.error('Item not found in local cart:', cartItemId);
+        if (zustandItem) {
+          if (quantity <= 0) {
+            cartStore.removeItem(zustandItem.id);
+          } else {
+            cartStore.updateQuantity(zustandItem.id, quantity);
+          }
+          return;
+        } else {
+          console.error('Item not found in cart:', cartItemId);
           return;
         }
-        
-        // Update the item quantity
-        updatedItems[itemIndex] = {
-          ...updatedItems[itemIndex],
-          quantity: quantity
-        };
-        
-        // Calculate new totals
-        const totalItems = updatedItems.reduce((sum, item) => sum + item.quantity, 0);
-        const totalAmount = updatedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        
-        // Update the local cart
-        const updatedLocalCart = {
-          ...localCart,
-          items: updatedItems,
-          totalItems,
-          totalAmount
-        };
-        
-        setLocalCart(updatedLocalCart);
-      } catch (error) {
-        console.error('Error updating local cart item:', error);
-        toast.error('Failed to update item quantity');
       }
-      return;
-    }
-    
-    // Handle backend cart update
-    if (!isAuthenticated || !user) {
-      toast.error('Please login to update cart');
-      return;
-    }
-
-    try {
+      
+      // Handle backend cart update for authenticated users
       setIsLoading(true);
       const updatedCart = await cartApi.updateCartItem(cartItemId, quantity);
-      setCart(updatedCart as Cart);
+      // Use type assertion to handle any inconsistencies between Cart types
+      setServerCart(updatedCart as unknown as Cart);
     } catch (error) {
       console.error('Error updating cart item:', error);
       toast.error('Failed to update item quantity');
@@ -240,42 +212,32 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Remove item from cart
   const removeFromCart = async (cartItemId: string) => {
     try {
       setIsLoading(true);
       
-      // Check if this is a local cart item (id starts with 'local-')
-      if (cartItemId.startsWith('local-')) {
-        if (!localCart) return;
+      // Handle local cart removal through Zustand
+      if (cartItemId.startsWith('local-') || !isAuthenticated) {
+        // Find the item in Zustand store
+        const zustandItem = cartStore.items.find(item => {
+          // Match either by id or by foodItemId
+          return item.id === cartItemId || 
+                 cartItemId.includes(item.foodItemId) || 
+                 (typeof item.foodItem === 'object' && item.foodItem?.id === cartItemId);
+        });
         
-        // Filter out the item to be removed
-        const updatedItems = localCart.items.filter(item => item.id !== cartItemId);
-        
-        // Calculate new totals
-        const totalItems = updatedItems.reduce((sum, item) => sum + item.quantity, 0);
-        const totalAmount = updatedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        
-        // Update the local cart
-        const updatedLocalCart = {
-          ...localCart,
-          items: updatedItems,
-          totalItems,
-          totalAmount
-        };
-        
-        setLocalCart(updatedLocalCart);
-        toast.success('Item removed from cart');
+        if (zustandItem) {
+          cartStore.removeItem(zustandItem.id);
+          toast.success('Item removed from cart');
+        }
         return;
       }
       
-      // Handle backend cart removal
-      if (!isAuthenticated || !user) {
-        toast.error('Please login to remove items from cart');
-        return;
-      }
-      
+      // Handle backend cart removal for authenticated users
       const updatedCart = await cartApi.removeFromCart(cartItemId);
-      setCart(updatedCart as Cart);
+      // Use type assertion to handle any inconsistencies between Cart types
+      setServerCart(updatedCart as unknown as Cart);
       toast.success('Item removed from cart');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to remove item from cart';
@@ -286,21 +248,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Clear cart
   const clearCart = async () => {
-    // Always clear the local cart
-    setLocalCart({
-      id: 'local-cart',
-      items: [],
-      totalItems: 0,
-      totalAmount: 0
-    });
+    // Always clear the Zustand store
+    cartStore.clearCart();
     
     // If user is authenticated, also clear the backend cart
     if (isAuthenticated && user && user.role === 'customer') {
       try {
         setIsLoading(true);
         await cartApi.clearCart();
-        setCart(null);
+        setServerCart(null);
       } catch (error) {
         console.error('Failed to clear backend cart:', error);
       } finally {
@@ -311,22 +269,33 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     toast.success('Cart cleared');
   };
 
+  // Create cart object for consumers
+  const cartObject: LocalCart = useMemo(() => {
+    return {
+      id: 'cart',
+      items: cartItems as LocalCartItem[],
+      totalItems,
+      totalAmount: totalPrice
+    };
+  }, [cartItems, totalItems, totalPrice]);
+
+  // Create the context value object with all cart state and actions
+  const contextValue: CartContextType = {
+    cart: serverCart || cartObject,
+    cartItems,
+    isLoading,
+    totalItems,
+    totalPrice,
+    addToCart,
+    updateCartItem,
+    removeFromCart,
+    clearCart,
+    openCartCallback,
+    setOpenCartCallback,
+  };
+
   return (
-    <CartContext.Provider
-      value={{
-        cart: cart || localCart,
-        cartItems,
-        isLoading,
-        totalItems,
-        totalPrice,
-        addToCart,
-        updateCartItem,
-        removeFromCart,
-        clearCart,
-        openCartCallback,
-        setOpenCartCallback,
-      }}
-    >
+    <CartContext.Provider value={contextValue}>
       {children}
     </CartContext.Provider>
   );
@@ -334,8 +303,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
 export function useCart(): CartContextType {
   const context = useContext(CartContext);
-  if (context === undefined) {
-    throw new Error('useCart must be used within a CartProvider');
-  }
-  return context;
+  
+  // Just return default context if it's not defined,
+  // this allows components to use the hook during initial render
+  // when providers might not be available yet
+  return context || defaultCartContext;
 } 

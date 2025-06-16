@@ -25,7 +25,7 @@ export const foodItemSchema = z.object({
     .or(z.string().regex(/^\d+(\.\d{1,2})?$/).transform(Number)),
   imageUrl: z
     .string()
-    .min(1, { message: 'Image URL is required' }),
+    .min(1, { message: 'Image filename is required' }),
   isAvailable: z
     .boolean()
     .default(true),

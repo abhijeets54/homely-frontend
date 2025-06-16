@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
-import Image from 'next/image';
 import { MainLayout } from '@/components/layouts';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,6 +12,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { sellerApi } from '@/lib/api';
 import { Seller } from '@/lib/types/models';
 import { Search, MapPin, Star, Clock } from 'lucide-react';
+import { getSellerImageUrl } from '@/lib/utils/image';
+import CloudinaryImage from '@/components/CloudinaryImage';
 
 export default function RestaurantsPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -111,8 +112,8 @@ export default function RestaurantsPage() {
               <Link href={`/restaurants/${restaurant.id}`} key={restaurant.id}>
                 <Card className="overflow-hidden h-full hover:shadow-lg transition-shadow duration-200">
                   <div className="relative h-48 w-full">
-                    <Image
-                      src={restaurant.imageUrl || '/placeholder-restaurant.jpg'}
+                    <CloudinaryImage
+                      src={getSellerImageUrl(restaurant.imageUrl || restaurant.image)}
                       alt={restaurant.name}
                       fill
                       className="object-cover"

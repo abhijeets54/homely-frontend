@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useQuery } from '@tanstack/react-query';
 import { foodApi } from '@/lib/api';
 import { MainLayout } from '@/components/layouts';
@@ -12,6 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Seller } from '@/lib/types/models';
 import { useAuth } from '@/providers/auth-provider';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { getSellerImageUrl } from '@/lib/utils/image';
+import CloudinaryImage from '@/components/CloudinaryImage';
 
 export default function SellersPage() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
@@ -92,12 +93,29 @@ export default function SellersPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {sellers.map((seller: Seller) => (
-              <Card key={seller._id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                <CardContent className="p-4">
-                  <h3 className="font-bold text-lg">{seller.name}</h3>
-                  <p className="text-gray-500 text-sm">{seller.address}</p>
-                </CardContent>
-              </Card>
+              <Link href={`/sellers/${seller._id}`} key={seller._id}>
+                <Card className="overflow-hidden hover:shadow-lg transition-shadow h-full">
+                  <div className="relative h-40">
+                    <CloudinaryImage
+                      src={getSellerImageUrl(seller.imageUrl || seller.image)}
+                      alt={seller.name}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <CardContent className="p-4">
+                    <h3 className="font-bold text-lg">{seller.name}</h3>
+                    <p className="text-gray-500 text-sm">{seller.address}</p>
+                    {seller.status && (
+                      <div className={`mt-2 inline-block px-2 py-1 text-xs rounded-full ${
+                        seller.status === 'open' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {seller.status === 'open' ? 'Open' : 'Closed'}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </div>
         )}

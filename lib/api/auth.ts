@@ -1,8 +1,7 @@
 import { AuthResponse, LoginData, RegisterData, UpdateProfileData } from '../types/auth';
 import Cookies from 'js-cookie';
 import { client } from './client';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+import { API_URL } from '../api-config';
 const USE_MOCK_API = process.env.NEXT_PUBLIC_USE_MOCK_API === 'true';
 
 // Log API configuration for debugging
@@ -98,31 +97,20 @@ export const authApi = {
   // Register user
   async register(data: RegisterData): Promise<AuthResponse> {
     try {
-      // Transform data to match backend structure
-      const payload = {
+      // Format the data for the backend
+      const registerData = {
         ...data,
-        // Ensure phone field is correctly named for backend
-        ...(data.phoneNumber && { phone: data.phoneNumber }),
-        // Remove role from payload as it's in the URL
-        role: undefined
+        phone: data.phoneNumber, // Backend uses phone instead of phoneNumber
       };
+
+      // Determine the correct endpoint based on role
+      const endpoint = `/api/auth/register/${data.role}`;
       
-      const response = await client.post(`/api/auth/register/${data.role}`, payload);
-      
-      // Store token in localStorage and cookies for persistence
-      if (response.data.token) {
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('userType', data.role);
-        localStorage.setItem('user', JSON.stringify(response.data.user)); // ✅ Save user data
-      
-        Cookies.set('token', response.data.token, { expires: 7, path: '/' });
-        Cookies.set('userType', data.role, { expires: 7, path: '/' });
-      }
-      
+      const response = await client.post<AuthResponse>(endpoint, registerData);
       return response.data;
-    } catch (error) {
-      console.error('Registration error:', error);
-      throw error;
+    } catch (error: any) {
+      console.error('Registration error:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.message || error.message || 'Registration failed');
     }
   },
   
@@ -141,18 +129,21 @@ export const authApi = {
   // Update user profile
   async updateProfile(data: UpdateProfileData): Promise<AuthResponse> {
     try {
-      // Transform data to match backend structure
-      const payload = {
-        ...data,
-        // Ensure phone field is correctly named for backend
-        ...(data.phoneNumber && { phone: data.phoneNumber })
+      const headers = {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
       };
-      
-      const response = await client.put('/api/auth/profile', payload);
+
+      // Format the data for the backend
+      const updateData = {
+        ...data,
+        phone: data.phoneNumber, // Backend uses phone instead of phoneNumber
+      };
+
+      const response = await client.put('/api/auth/profile', updateData, { headers });
       return response.data;
-    } catch (error) {
-      console.error('Update profile error:', error);
-      throw error;
+    } catch (error: any) {
+      console.error('Update profile error:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.message || error.message || 'Failed to update profile');
     }
   },
   
@@ -173,23 +164,10 @@ export const authApi = {
   // Logout user
   async logout(): Promise<void> {
     try {
-      // Try to call the logout endpoint, but don't wait for it
-      // This way, even if the endpoint doesn't exist, we still clear local state
-      client.post('/api/auth/logout').catch(err => {
-        console.log('Logout endpoint not available, clearing local state only');
-      });
-      
-      // Clear token from localStorage and cookies
-      localStorage.removeItem('token');
-      Cookies.remove('token');
-      Cookies.remove('userType');
-    } catch (error) {
-      console.error('Logout error:', error);
-      
-      // Still clear local tokens even if server logout fails
-      localStorage.removeItem('token');
-      Cookies.remove('token');
-      Cookies.remove('userType');
+      await client.post('/api/auth/logout');
+    } catch (error: any) {
+      console.error('Logout error:', error.response?.data || error.message);
+      // We don't throw here because we want to clear local state even if the server call fails
     }
   }
 };

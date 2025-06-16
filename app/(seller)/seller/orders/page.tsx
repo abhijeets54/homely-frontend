@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layouts/dashboard-layout';
 import { Button } from '@/components/ui/button';
@@ -20,7 +20,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { formatPrice, formatDate } from '@/lib/utils';
-import { Order } from '@/lib/types';
+import { Order } from '@/lib/types/models';
+import { useAuth } from '@/providers/auth-provider';
+import { sellerApi } from '@/lib/api/seller';
+import { useOrderMetricsStore } from '@/lib/store/orderMetricsStore';
 
 const orderStatuses = [
   { value: 'pending', label: 'Pending' },
@@ -32,11 +35,32 @@ const orderStatuses = [
 ];
 
 export default function OrderManagementPage() {
-  const { sellerId } = useParams(); // Assuming sellerId is passed as a route parameter
+  const { user } = useAuth();
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [isMounted, setIsMounted] = useState(false);
+  
+  // Get seller ID from user data
+  const sellerId = user ? (user as any).id : undefined;
+
+  // Initialize the order metrics store
+  const orderMetricsStore = useOrderMetricsStore();
+  
+  // Force rehydration of orderMetricsStore when component mounts
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsMounted(true);
+      // Rehydrate the store
+      useOrderMetricsStore.persist.rehydrate();
+      
+      // Recalculate metrics with a slight delay
+      setTimeout(() => {
+        orderMetricsStore.calculateMetrics();
+      }, 300);
+    }
+  }, []);
 
   if (!sellerId) {
     console.error('Seller ID is undefined');
@@ -45,26 +69,101 @@ export default function OrderManagementPage() {
       description: 'Seller ID is required to fetch orders.',
       variant: 'destructive',
     });
-    return null; // Return null if sellerId is not available
+    return (
+      <DashboardLayout>
+        <div className="space-y-8">
+          <div>
+            <h1 className="text-3xl font-bold">Order Management</h1>
+            <p className="text-muted-foreground">
+              Please log in to view your orders
+            </p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
   }
 
-  // Fetch orders
-  const { data: orders = [], isLoading } = useQuery<Order[]>({
+  // Fetch orders from API
+  const { data: apiOrders = [], isLoading } = useQuery<Order[]>({
     queryKey: ['orders', sellerId, selectedStatus],
     queryFn: async () => {
-      const response = await apiClient.get<Order[]>(`/api/seller/${sellerId}/orders`);
-      return response.data;
+      try {
+        const response = await sellerApi.getOrders();
+        return response;
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+        return [];
+      }
     },
   });
+  
+  // Get orders from local storage
+  const localOrders = orderMetricsStore.orders.filter(order => {
+    // Debug - log restaurant IDs for comparison
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`Comparing order restaurantId '${order.restaurantId}' with sellerId '${sellerId}'`);
+    }
+    
+    // If order has no restaurantId, skip it
+    if (!order.restaurantId) return false;
+    
+    // Normalize restaurantId for comparison
+    const orderRestaurantId = String(order.restaurantId || '').toLowerCase();
+    const sellerIdStr = String(sellerId || '').toLowerCase();
+    
+    // Use more flexible matching to handle different ID formats
+    return orderRestaurantId === sellerIdStr || 
+           orderRestaurantId.includes(sellerIdStr) || 
+           sellerIdStr.includes(orderRestaurantId) ||
+           // Handle special MongoDB IDs
+           (orderRestaurantId.length >= 12 && sellerIdStr.includes(orderRestaurantId.substring(0, 12))) ||
+           (sellerIdStr.length >= 12 && orderRestaurantId.includes(sellerIdStr.substring(0, 12)));
+  });
+  
+  // Add option to show all orders (for debugging purposes)
+  const [showAllOrders, setShowAllOrders] = useState(false);
+  
+  // Combine orders, preferring API orders if they exist
+  const combinedOrders: Order[] = apiOrders.length > 0 
+    ? apiOrders 
+    : showAllOrders 
+      ? orderMetricsStore.orders as unknown as Order[]
+      : localOrders as unknown as Order[];
+  
+  // Add debug function to log all order details
+  const logOrderDetails = () => {
+    console.log('All orders in store:', orderMetricsStore.orders);
+    console.log('Current sellerId:', sellerId);
+    console.log('Local orders after filtering:', localOrders);
+    setShowAllOrders(!showAllOrders);
+  };
+  
+  // Log available orders for debugging
+  useEffect(() => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('API Orders:', apiOrders.length);
+      console.log('Local Orders:', localOrders.length);
+      console.log('Combined Orders:', combinedOrders.length);
+    }
+  }, [apiOrders, localOrders, combinedOrders]);
 
   // Update order status mutation
   const { mutate: updateOrderStatus } = useMutation({
     mutationFn: async ({ orderId, status }: { orderId: string; status: string }) => {
-      // TODO: Implement API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // API update
+      try {
+        await sellerApi.updateOrderStatus(orderId, { 
+          status: status as 'pending' | 'preparing' | 'out for delivery' | 'delivered'
+        });
+      } catch (error) {
+        console.error('API update failed, updating local storage only');
+      }
+      
+      // Also update in local storage
+      orderMetricsStore.updateOrderStatus(orderId, status);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['orders']);
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
       toast({
         title: 'Success',
         description: 'Order status updated successfully',
@@ -79,13 +178,15 @@ export default function OrderManagementPage() {
     },
   });
 
-  // Filter orders based on search query
-  const filteredOrders = orders.filter((order) =>
-    order.id.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter orders based on search query and status
+  const filteredOrders = combinedOrders.filter((order) => {
+    const matchesSearch = order.id.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = !selectedStatus || order.status === selectedStatus;
+    return matchesSearch && matchesStatus;
+  });
 
   const getStatusColor = (status: string) => {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case 'pending':
         return 'bg-yellow-500';
       case 'preparing':
@@ -93,6 +194,7 @@ export default function OrderManagementPage() {
       case 'ready':
         return 'bg-green-500';
       case 'out_for_delivery':
+      case 'on-the-way':
         return 'bg-purple-500';
       case 'delivered':
         return 'bg-gray-500';
@@ -111,6 +213,19 @@ export default function OrderManagementPage() {
           <p className="text-muted-foreground">
             View and manage all your orders in one place
           </p>
+        </div>
+
+        <div className="flex justify-between items-center">
+          <div className="flex-1">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={logOrderDetails} 
+              className="text-xs"
+            >
+              {showAllOrders ? "Show My Orders Only" : "Debug: Show All Orders"}
+            </Button>
+          </div>
         </div>
 
         <div className="space-y-4">
@@ -146,21 +261,18 @@ export default function OrderManagementPage() {
           </div>
 
           {isLoading ? (
-            <div className="flex h-96 items-center justify-center">
+            <div className="flex justify-center py-8">
               <LoadingSpinner />
             </div>
           ) : filteredOrders.length === 0 ? (
-            <Card className="p-8 text-center">
-              <Icons.inbox className="mx-auto h-12 w-12 text-muted-foreground" />
-              <h2 className="mt-4 text-lg font-semibold">No orders found</h2>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {searchQuery
-                  ? 'Try adjusting your search query'
-                  : selectedStatus
-                  ? `No ${selectedStatus} orders found`
-                  : 'No orders to display'}
+            <div className="rounded-lg border p-8 text-center">
+              <h2 className="text-xl font-semibold">No orders found</h2>
+              <p className="text-muted-foreground mt-2">
+                {searchQuery || selectedStatus
+                  ? 'Try adjusting your filters'
+                  : 'You currently have no orders'}
               </p>
-            </Card>
+            </div>
           ) : (
             <div className="space-y-4">
               {filteredOrders.map((order) => (
@@ -172,7 +284,7 @@ export default function OrderManagementPage() {
                         <Badge className={getStatusColor(order.status)}>
                           {
                             orderStatuses.find((s) => s.value === order.status)
-                              ?.label
+                              ?.label || order.status
                           }
                         </Badge>
                       </div>
@@ -185,7 +297,7 @@ export default function OrderManagementPage() {
                         {formatPrice(order.totalPrice)}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {order.items.length} items
+                        {order.items?.length || 0} items
                       </p>
                     </div>
                   </div>
@@ -201,77 +313,6 @@ export default function OrderManagementPage() {
                       <Icons.chevronRight className="mr-2 h-4 w-4" />
                       View Details
                     </Button>
-                  </div>
-
-                  <div className="mt-4 space-y-4">
-                    <div className="space-y-2">
-                      <Label>Update Status</Label>
-                      <Select
-                        value={order.status}
-                        onValueChange={(value) =>
-                          updateOrderStatus({
-                            orderId: order.id,
-                            status: value,
-                          })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {orderStatuses.map((status) => (
-                            <SelectItem
-                              key={status.value}
-                              value={status.value}
-                              disabled={
-                                status.value === 'cancelled' &&
-                                order.status === 'delivered'
-                              }
-                            >
-                              {status.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="rounded-lg bg-muted p-4">
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">
-                            Delivery Address
-                          </span>
-                        </div>
-                        <p className="text-sm">{order.deliveryAddress}</p>
-                        {order.specialInstructions && (
-                          <p className="text-sm text-muted-foreground">
-                            Note: {order.specialInstructions}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Order Items</Label>
-                      <div className="space-y-2">
-                        {order.items.map((item) => (
-                          <div
-                            key={item.id}
-                            className="flex items-center justify-between rounded-lg bg-muted p-2"
-                          >
-                            <div>
-                              <p className="font-medium">{item.name}</p>
-                              <p className="text-sm text-muted-foreground">
-                                Quantity: {item.quantity}
-                              </p>
-                            </div>
-                            <p className="font-medium">
-                              {formatPrice(item.price * item.quantity)}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
                   </div>
                 </Card>
               ))}

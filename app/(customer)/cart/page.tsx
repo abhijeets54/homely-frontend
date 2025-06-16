@@ -280,7 +280,7 @@ export default function CartPage() {
               </div>
               <div className="flex justify-between mb-2">
                 <span>Delivery Fee</span>
-                <span>₹50.00</span>
+                <span>50.00</span>
               </div>
               <div className="flex justify-between font-bold text-lg border-t border-gray-300 pt-2 mt-2">
                 <span>Total</span>

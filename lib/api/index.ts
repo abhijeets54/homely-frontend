@@ -4,6 +4,7 @@ import type {
   AuthResponse, Customer, Seller, Category, 
   FoodItem, Cart, Order, DeliveryAssignment, Payment 
 } from '../types';
+import { API_URL } from '../api-config';
 
 // Export all API services
 export * from './client';
@@ -20,14 +21,16 @@ export * from './notification';
 
 // Re-export specific hooks or utilities
 import { useCart } from './cart';
-import { useOrders } from './orders';
+import { useGetCustomerOrders, useGetSellerOrders, useGetOrder } from './orders';
 import { usePayment, usePaymentByOrder } from './payment';
 import { useRestaurantReviews, useFoodItemReviews } from './review';
 import { useNotifications } from './notification';
 
 export { 
   useCart, 
-  useOrders, 
+  useGetCustomerOrders,
+  useGetSellerOrders,
+  useGetOrder,
   usePayment, 
   usePaymentByOrder,
   useRestaurantReviews,
@@ -35,10 +38,11 @@ export {
   useNotifications
 };
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+// Use the API_URL from our config and append /api
+const API_ENDPOINT = `${API_URL}/api`;
 
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: API_ENDPOINT,
   headers: {
     'Content-Type': 'application/json',
   },

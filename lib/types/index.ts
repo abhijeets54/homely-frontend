@@ -1,4 +1,4 @@
-export type UserRole = 'customer' | 'seller' | 'delivery';
+export type UserRole = 'customer' | 'seller';
 
 export interface BaseUser {
   id: string;
@@ -18,10 +18,6 @@ export interface Seller extends BaseUser {
   rating?: number;
 }
 
-export interface DeliveryPartner extends BaseUser {
-  vehicleType: string;
-}
-
 export interface Category {
   id: string;
   name: string;
@@ -31,25 +27,29 @@ export interface Category {
 export interface FoodItem {
   id: string;
   name: string;
-  categoryId: string;
-  restaurantId: string;
-  price: number;
-  imageUrl: string;
-  isAvailable: boolean;
-  createdAt: string;
-  updatedAt: string;
-  stock: number;
   description: string;
-  dietaryInfo: string;
+  price: number;
+  image: string;
+  category: string;
+  restaurantId: string;
+  isAvailable: boolean;
+  preparationTime: number;
+  ingredients: string[];
+  allergens?: string[];
+  nutritionalInfo?: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+  };
 }
 
 export interface CartItem {
   id: string;
-  cartId: string;
   foodItemId: string;
   quantity: number;
   price: number;
-  foodItem?: FoodItem;
+  foodItem: FoodItem;
 }
 
 export interface Cart {
@@ -90,7 +90,6 @@ export interface DeliveryAssignment {
   deliveryPartnerId: string;
   status: 'assigned' | 'picked up' | 'delivered';
   estimatedDeliveryTime: string;
-  deliveryPartner?: DeliveryPartner;
 }
 
 export interface Payment {
@@ -114,12 +113,11 @@ export interface RegisterData {
   phoneNumber: string;
   address: string;
   role: UserRole;
-  vehicleType?: string;
 }
 
 export interface AuthResponse {
   token: string;
-  user: Customer | Seller | DeliveryPartner;
+  user: Customer | Seller;
   userType: UserRole;
 }
 
@@ -142,7 +140,12 @@ export interface ReviewResponse {
   createdAt: string;
 }
 
-export * from './models';
+// Re-export from other modules with explicit naming to avoid conflicts
+export type { 
+  ApiResponse,
+  PaginatedResponse,
+} from './models';
+
 export * from './auth';
 export * from './payment';
 export * from './notification'; 

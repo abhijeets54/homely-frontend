@@ -1,5 +1,5 @@
 // User roles
-export type UserRole = 'customer' | 'seller' | 'delivery' | 'admin';
+export type UserRole = 'customer' | 'seller' | 'admin';
 
 // Base user interface
 export interface User {
@@ -14,7 +14,7 @@ export interface User {
   status?: 'open' | 'closed'; // For sellers
   rating?: number; // For sellers
   favoriteSellers?: string[]; // For customers
-  vehicleType?: string; // For delivery partners
+  imageUrl?: string; // For sellers - cover image
 }
 
 // Login data interface
@@ -33,7 +33,7 @@ export interface RegisterData {
   phoneNumber?: string; // Frontend uses phoneNumber
   address?: string;
   role: UserRole;
-  vehicleType?: string; // For delivery partners
+  imageUrl?: string; // For sellers - cover image
 }
 
 // Update profile data interface
@@ -42,7 +42,7 @@ export interface UpdateProfileData {
   phoneNumber?: string; // Frontend uses phoneNumber
   address?: string;
   password?: string;
-  vehicleType?: string; // For delivery partners
+  imageUrl?: string; // For sellers - cover image
 }
 
 // Auth response interface

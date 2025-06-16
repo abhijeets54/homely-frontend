@@ -19,6 +19,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/providers/auth-provider';
+import ImageUploader from '@/components/ImageUploader';
 
 export default function NewFoodItemPage() {
   const router = useRouter();
@@ -211,12 +212,17 @@ export default function NewFoodItemPage() {
 
                   {/* Image URL */}
                   <div className="space-y-2">
-                    <Label htmlFor="imageUrl">Image URL</Label>
-                    <Input
-                      id="imageUrl"
-                      placeholder="Enter image URL"
-                      {...form.register('imageUrl')}
+                    <Label htmlFor="imageUrl">Item Image</Label>
+                    <ImageUploader
+                      onImageUpload={(imageUrl) => {
+                        form.setValue('imageUrl', imageUrl);
+                      }}
+                      folder="food"
+                      buttonText="Upload Food Image"
                     />
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Recommended image size: 800x600 pixels
+                    </p>
                     {form.formState.errors.imageUrl && (
                       <p className="text-sm text-red-500">{form.formState.errors.imageUrl.message}</p>
                     )}

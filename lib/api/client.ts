@@ -1,8 +1,9 @@
 import axios from 'axios';
 import { getCookie } from 'cookies-next';
+import { API_URL } from '../api-config';
 
 // Define the base URL for API requests
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'; // Updated to port 5000
+const BASE_URL = API_URL; // Use the API_URL from our config
 
 // Create an axios instance with default config
 const apiClient = axios.create({
@@ -10,7 +11,7 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, // 10 seconds timeout
+  timeout: 30000, // 30 seconds timeout for large image uploads
   withCredentials: true, // Important for cookies
 });
 
@@ -41,6 +42,13 @@ apiClient.interceptors.request.use(
     } else {
       console.warn('No auth token available for request to:', config.url);
     }
+    
+    // Log the request details
+    console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`, {
+      headers: config.headers,
+      data: config.data,
+    });
+    
     return config;
   },
   (error) => {
@@ -51,9 +59,20 @@ apiClient.interceptors.request.use(
 // Add a response interceptor to handle common errors
 apiClient.interceptors.response.use(
   (response) => {
+    console.log(`API Response: ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`, {
+      data: response.data,
+    });
     return response;
   },
   (error) => {
+    console.error('API Error:', {
+      url: error.config?.url,
+      method: error.config?.method?.toUpperCase(),
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+    });
+    
     const { response } = error;
     
     // Handle specific error cases

@@ -14,10 +14,13 @@ import { useAuth } from '@/providers/auth-provider';
 import { UserRole } from '@/lib/types';
 import { Icons } from '@/components/ui/icons';
 
+// Define a more specific role type for login
+type LoginRole = 'customer' | 'seller';
+
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
-  role: z.enum(['customer', 'seller', 'delivery'] as const),
+  role: z.enum(['customer', 'seller'] as const),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -29,8 +32,15 @@ export function LoginForm() {
   const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
-  const defaultRole = (searchParams.get('userType') as UserRole) || 'customer';
-  // console.log('Default role:', defaultRole); // Ensure this is 'seller' when needed
+  // Convert any role to a valid login role
+  const getValidRole = (role: string | null): LoginRole => {
+    if (role === 'customer' || role === 'seller') {
+      return role;
+    }
+    return 'customer'; // Default to customer for any other role
+  };
+
+  const defaultRole = getValidRole(searchParams.get('userType'));
 
   const {
     register,
@@ -46,7 +56,6 @@ export function LoginForm() {
   });
 
   const selectedRole = watch('role');
-  // console.log('Selected role:', selectedRole); // Log the selected role
 
   const onSubmit = async (data: LoginFormData) => {
     console.log('Current form errors:', errors); // Log current form errors // Log the form state before submission
@@ -80,12 +89,11 @@ export function LoginForm() {
     <form 
       onSubmit={handleSubmit(onSubmit)} 
       className="space-y-4"
-       // Log when the form is clicked
     >
       <RadioGroup
         value={selectedRole} // Bind the selected role
-        onValueChange={(value) => setValue('role', value as UserRole)} // Explicitly cast the value
-        className="grid grid-cols-3 gap-4 mb-4"
+        onValueChange={(value) => setValue('role', value as LoginRole)} // Cast to LoginRole
+        className="grid grid-cols-2 gap-4 mb-4"
       >
         <div>
           <RadioGroupItem value="customer" id="customer" className="peer sr-only" />
@@ -103,15 +111,6 @@ export function LoginForm() {
             className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-transparent p-4 hover:bg-muted peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
           >
             <span className="text-sm font-medium">Seller</span>
-          </Label>
-        </div>
-        <div>
-          <RadioGroupItem value="delivery" id="delivery" className="peer sr-only" />
-          <Label
-            htmlFor="delivery"
-            className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-transparent p-4 hover:bg-muted peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
-          >
-            <span className="text-sm font-medium">Delivery Partner</span>
           </Label>
         </div>
       </RadioGroup>

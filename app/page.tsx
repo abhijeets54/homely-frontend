@@ -9,6 +9,8 @@ import { MainLayout } from '../components/layouts';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
 import { Seller } from '../lib/types/models';
+import { getSellerImageUrl } from '@/lib/utils/image';
+import CloudinaryImage from '@/components/CloudinaryImage';
 
 export default function HomePage() {
   // Fetch featured sellers
@@ -118,12 +120,10 @@ export default function HomePage() {
                   <Card key={seller.id || index} className="hover:shadow-lg transition-shadow duration-300">
                     {/* Seller Image */}
                     <div className="relative h-40 w-full rounded-t-lg overflow-hidden">
-                      {console.log('Seller image:', seller.image)} {/* Log the seller image */}
-                      <Image
-                        src={seller.image || '/placeholder-image.jpg'} // Use a placeholder if no image is available
+                      <CloudinaryImage
+                        src={getSellerImageUrl(seller.imageUrl || seller.image)}
                         alt={seller.name}
                         fill
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                         className="object-cover"
                       />
                     </div>
@@ -178,13 +178,20 @@ export default function HomePage() {
                   ))}
                 </div>
                 <p className="text-gray-700 mb-4">
-                  "The food from Homely is amazing! It's like having a personal chef. The flavors are authentic and the delivery is always on time."
+                  "The food from Homely reminds me of my mother's cooking! The authentic flavors bring back childhood memories. The paneer butter masala was absolutely delicious."
                 </p>
                 <div className="flex items-center">
-                  <div className="w-10 h-10 bg-gray-300 rounded-full mr-3"></div>
+                  <div className="w-10 h-10 rounded-full mr-3 overflow-hidden relative">
+                    <Image 
+                      src="https://randomuser.me/api/portraits/men/36.jpg" 
+                      alt="Rajesh Sharma"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
                   <div>
-                    <p className="font-semibold">Sarah Johnson</p>
-                    <p className="text-sm text-gray-500">Regular Customer</p>
+                    <p className="font-semibold">Rajesh Sharma</p>
+                    <p className="text-sm text-gray-500">Delhi</p>
                   </div>
                 </div>
               </CardContent>
@@ -199,13 +206,20 @@ export default function HomePage() {
                   ))}
                 </div>
                 <p className="text-gray-700 mb-4">
-                  "I love supporting local home chefs through Homely. The variety of cuisines available is impressive and the quality is consistently excellent."
+                  "As a working professional, Homely has been a lifesaver! The South Indian meals are perfectly spiced, and I love supporting local home chefs. Their dosa and sambhar are outstanding."
                 </p>
                 <div className="flex items-center">
-                  <div className="w-10 h-10 bg-gray-300 rounded-full mr-3"></div>
+                  <div className="w-10 h-10 rounded-full mr-3 overflow-hidden relative">
+                    <Image 
+                      src="https://randomuser.me/api/portraits/women/33.jpg" 
+                      alt="Priya Patel"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
                   <div>
-                    <p className="font-semibold">Michael Chen</p>
-                    <p className="text-sm text-gray-500">Foodie Enthusiast</p>
+                    <p className="font-semibold">Priya Patel</p>
+                    <p className="text-sm text-gray-500">Mumbai</p>
                   </div>
                 </div>
               </CardContent>
@@ -220,13 +234,20 @@ export default function HomePage() {
                   ))}
                 </div>
                 <p className="text-gray-700 mb-4">
-                  "As someone with dietary restrictions, I appreciate how Homely makes it easy to find suitable options. The food is delicious and the service is excellent."
+                  "My family loves the variety of regional cuisines available on Homely. The Bengali fish curry was exceptional, and the biryani is consistently the best I've had in Bangalore!"
                 </p>
                 <div className="flex items-center">
-                  <div className="w-10 h-10 bg-gray-300 rounded-full mr-3"></div>
+                  <div className="w-10 h-10 rounded-full mr-3 overflow-hidden relative">
+                    <Image 
+                      src="https://randomuser.me/api/portraits/men/22.jpg" 
+                      alt="Vikram Iyer"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
                   <div>
-                    <p className="font-semibold">Emily Rodriguez</p>
-                    <p className="text-sm text-gray-500">Health-Conscious Diner</p>
+                    <p className="font-semibold">Vikram Iyer</p>
+                    <p className="text-sm text-gray-500">Bangalore</p>
                   </div>
                 </div>
               </CardContent>

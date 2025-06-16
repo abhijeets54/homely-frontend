@@ -122,9 +122,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           router.push('/customer/dashboard');
         } else if (response.user.role === 'seller') {
           router.push('/seller/dashboard');
-        } else if (response.user.role === 'delivery') {
-          router.push('/delivery/dashboard');
         } else {
+          // If somehow a delivery partner logs in through API, redirect to home
           router.push('/');
         }
       } else {
@@ -163,9 +162,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           router.push('/customer/dashboard');
         } else if (userRole === 'seller') {
           router.push('/seller/dashboard');
-        } else if (userRole === 'delivery') {
-          router.push('/delivery/dashboard');
         } else {
+          // If somehow a delivery partner registers through API, redirect to home
           router.push('/');
         }
       } else {

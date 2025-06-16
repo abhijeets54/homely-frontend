@@ -15,6 +15,9 @@ import { useCart } from '../../../components/providers/cart-provider';
 import { useAuth } from '../../../providers/auth-provider'; // Corrected import
 import { toast } from 'sonner';
 import { debugCartApi } from '../../../lib/api/debug-cart';
+import { FoodItem } from '../../../lib/types/models';
+import { getSellerImageUrl, getFullImageUrl } from '@/lib/utils/image';
+import CloudinaryImage from '@/components/CloudinaryImage';
 
 interface SellerDetailPageProps {
   params: {
@@ -29,13 +32,25 @@ const getCategoryId = (categoryId: any) =>
     : categoryId?._id || categoryId?.id || '';
 
 export default function SellerDetailPage({ params }: SellerDetailPageProps) {
-  // Properly extract the sellerId parameter using React.use()
-  const { sellerId } = React.use(params);
+  // Extract the sellerId parameter directly from params
+  const { sellerId } = params;
 
-  // Ensure sellerId is defined
-  if (!sellerId) {
-      console.error('Error: sellerId is undefined'); // Log the error without additional arguments
-      return null; // Prevent rendering if sellerId is not available
+  // Ensure sellerId is defined and log it for debugging
+  console.log('Current sellerId:', sellerId);
+  
+  // Early return with a user-friendly message if sellerId is missing
+  if (!sellerId || sellerId === 'undefined') {
+    return (
+      <MainLayout>
+        <div className="container mx-auto px-4 py-8 text-center">
+          <h2 className="text-xl font-semibold text-red-600 mb-2">Invalid Seller ID</h2>
+          <p className="text-gray-600 mb-6">The seller ID is missing or invalid.</p>
+          <Button asChild>
+            <Link href="/sellers">Browse Sellers</Link>
+          </Button>
+        </div>
+      </MainLayout>
+    );
   }
 
   const { isAuthenticated } = useAuth(); // Use useAuth instead of useAuthContext
@@ -59,13 +74,21 @@ export default function SellerDetailPage({ params }: SellerDetailPageProps) {
   // Fetch seller details
   const { 
     data: seller, 
-    isLoading: sellerLoading 
+    isLoading: sellerLoading,
+    error: sellerError
   } = useQuery({
     queryKey: ['seller', sellerId],
     queryFn: () => foodApi.getSellerById(sellerId),
-    enabled: !!sellerId, // Ensure the query only runs if sellerId is defined
+    enabled: !!sellerId && sellerId !== 'undefined', // Only run if sellerId is valid
     staleTime: 1000 * 60 * 5, // Optional: cache the result for 5 minutes
   });
+
+  // Log any seller fetch errors
+  useEffect(() => {
+    if (sellerError) {
+      console.error('Error fetching seller:', sellerError);
+    }
+  }, [sellerError]);
 
   // Fetch seller's menu categories
   const { 
@@ -73,7 +96,8 @@ export default function SellerDetailPage({ params }: SellerDetailPageProps) {
     isLoading: categoriesLoading 
   } = useQuery({
     queryKey: ['categories', sellerId],
-    queryFn: () => foodApi.getCategoriesBySeller(sellerId), // Corrected function name
+    queryFn: () => foodApi.getCategoriesBySeller(sellerId),
+    enabled: !!sellerId && sellerId !== 'undefined', // Only run if sellerId is valid
   });
 
   // Fetch seller's menu items
@@ -82,7 +106,8 @@ export default function SellerDetailPage({ params }: SellerDetailPageProps) {
     isLoading: menuItemsLoading 
   } = useQuery({
     queryKey: ['menu-items', sellerId],
-    queryFn: () => foodApi.getFoodItemsBySeller(sellerId), // Corrected function name
+    queryFn: () => foodApi.getFoodItemsBySeller(sellerId),
+    enabled: !!sellerId && sellerId !== 'undefined', // Only run if sellerId is valid
   });
 
   // Loading state
@@ -94,7 +119,6 @@ export default function SellerDetailPage({ params }: SellerDetailPageProps) {
     : menuItems.filter(item => getCategoryId(item.categoryId) === activeCategory);
 
   // Handle add to cart
-
   const handleAddToCart = async (item: any) => {
     // Check if item is available
     if (!item.isAvailable) {
@@ -114,24 +138,22 @@ export default function SellerDetailPage({ params }: SellerDetailPageProps) {
         return;
       }
       
-      // Convert the item to a proper FoodItem format if needed
+      // Convert the item to a format compatible with the cart
       const foodItem = {
         id: itemId,
         name: item.name,
         price: item.price,
-        imageUrl: item.imageUrl || '',
-        isAvailable: item.isAvailable,
-        categoryId: item.categoryId || '',
+        image: item.imageUrl || '',
+        isAvailable: item.isAvailable !== false,
+        category: item.categoryId || '',
         restaurantId: item.restaurantId || sellerId,
-        createdAt: item.createdAt || new Date().toISOString(),
-        updatedAt: item.updatedAt || new Date().toISOString(),
-        stock: item.stock || 10,
         description: item.description || '',
-        dietaryInfo: item.dietaryInfo || ''
+        preparationTime: item.preparationTime || 30,
+        ingredients: item.ingredients || []
       };
       
       // Use our improved cart function which works with or without authentication
-      await addToCart(foodItem, 1);
+      await addToCart(foodItem as any, 1);
       
       toast.success(`${item.name} added to cart`);
     } catch (error) {
@@ -139,23 +161,6 @@ export default function SellerDetailPage({ params }: SellerDetailPageProps) {
       toast.error(`Could not add ${item.name} to cart: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
-
-  //   if (!item.isAvailable || item.stock <= 0) {
-  //     toast.error('This item is currently unavailable');
-  //     return;
-  //   }
-
-  //   addToCart({
-  //     id: item.id,
-  //     name: item.name,
-  //     price: item.price,
-  //     quantity: 1,
-  //     sellerId: sellerId,
-  //     sellerName: seller?.name || '',
-  //   });
-
-  //   toast.success(`${item.name} added to cart`);
-  // };
 
   return (
     <MainLayout>
@@ -174,8 +179,8 @@ export default function SellerDetailPage({ params }: SellerDetailPageProps) {
           <>
             {/* Seller Header */}
             <div className="relative h-64 rounded-xl overflow-hidden mb-6">
-              <Image
-                src={`https://source.unsplash.com/random/1200x400/?kitchen,cooking,${sellerId}`}
+              <CloudinaryImage
+                src={getSellerImageUrl(seller.imageUrl || seller.image)}
                 alt={seller.name}
                 fill
                 className="object-cover"
@@ -236,8 +241,8 @@ export default function SellerDetailPage({ params }: SellerDetailPageProps) {
                       {filteredMenuItems.map((item: any) => (
                         <Card key={item._id} className={`overflow-hidden ${!item.isAvailable || item.stock <= 0 ? 'opacity-70' : ''}`}>
                           <div className="relative h-48">
-                            <Image
-                              src={item.imageUrl || `https://source.unsplash.com/random/400x300/?food,${item.name}`}
+                            <CloudinaryImage
+                              src={getFullImageUrl(item.imageUrl)}
                               alt={item.name}
                               fill
                               className="object-cover"

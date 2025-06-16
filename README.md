@@ -208,5 +208,54 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [TailwindCSS](https://tailwindcss.com/)
 - [Shadcn UI](https://ui.shadcn.com/)
 - [Express.js](https://expressjs.com/)
-- [MongoDB](https://www.mongodb.com/) #   h o m e l y - f r o n t e n d  
- 
+- [MongoDB](https://www.mongodb.com/)
+
+## Cloudinary Integration
+
+This project uses Cloudinary for image storage and optimization. To set up Cloudinary:
+
+1. Create a Cloudinary account at [cloudinary.com](https://cloudinary.com)
+
+2. Create an upload preset:
+   - Go to Settings > Upload
+   - Create a new upload preset with "Unsigned" mode
+   - Note the preset name
+
+3. Set up environment variables:
+   - Create a `.env.local` file in the project root (if not already present)
+   - Add the following variables:
+   ```
+   NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=your_cloud_name
+   NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=your_upload_preset
+   ```
+
+4. Replace `your_cloud_name` with your Cloudinary cloud name and `your_upload_preset` with the name of the upload preset you created.
+
+## Image Components
+
+The project includes two main components for working with images:
+
+- `CloudinaryImage`: A wrapper around Next.js Image component optimized for Cloudinary
+- `ImageUploader`: A component for uploading images to Cloudinary
+
+Example usage:
+
+```jsx
+// Display an image
+<CloudinaryImage 
+  src="cloudinary_image_url" 
+  alt="Description" 
+  width={500} 
+  height={300} 
+/>
+
+// Upload an image
+<ImageUploader
+  onImageUpload={(imageUrl) => {
+    // Handle the uploaded image URL
+    console.log(imageUrl);
+  }}
+  folder="food"
+  buttonText="Upload Image"
+/>
+```

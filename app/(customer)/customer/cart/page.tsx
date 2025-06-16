@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function CartPage() {
   const { user } = useAuth();
@@ -25,6 +26,7 @@ export default function CartPage() {
   const { mutate: updateCart } = useUpdateCart();
   const { mutate: createOrder } = useCreateOrder();
   const { toast } = useToast();
+  const router = useRouter();
 
   const handleUpdateQuantity = (foodItemId: string, quantity: number) => {
     if (!cart) return;
@@ -53,38 +55,8 @@ export default function CartPage() {
   };
 
   const handleCheckout = () => {
-    if (!cart || !user) return;
-
-    createOrder(
-      {
-        restaurantId: cart.items[0]?.foodItem?.restaurantId || '',
-        userId: user.id,
-        status: 'pending',
-        totalPrice: calculateTotal(),
-        paymentStatus: 'pending',
-        deliveryAddress: user.address,
-        items: cart.items.map((item) => ({
-          foodItemId: item.foodItemId,
-          quantity: item.quantity,
-          price: item.price,
-        })),
-      },
-      {
-        onSuccess: () => {
-          toast({
-            title: 'Success',
-            description: 'Order placed successfully!',
-          });
-        },
-        onError: () => {
-          toast({
-            title: 'Error',
-            description: 'Failed to place order. Please try again.',
-            variant: 'destructive',
-          });
-        },
-      }
-    );
+    // Navigate to checkout page
+    router.push('/checkout');
   };
 
   const calculateTotal = () => {

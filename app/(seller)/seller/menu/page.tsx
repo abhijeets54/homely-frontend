@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 import { UtensilsCrossed } from 'lucide-react';
 import type { Category, FoodItem } from '@/lib/types';
+import { getFullImageUrl } from '@/lib/utils/image';
 
 const getCategoryId = (categoryId: any) =>
   typeof categoryId === 'string'
@@ -245,7 +246,7 @@ export default function SellerMenuPage() {
                       ) : (
                         <CardContent>
                           <Image
-                            src={item.imageUrl || `https://source.unsplash.com/random/400x300/?food,${item.name}`}
+                            src={getFullImageUrl(item.imageUrl) || `https://source.unsplash.com/random/400x300/?food,${item.name}`}
                             alt={item.name}
                             width={400}
                             height={300}

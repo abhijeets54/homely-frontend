@@ -1,77 +1,87 @@
 'use client';
 
 import { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Icons } from '@/components/ui/icons';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice, formatDate } from '@/lib/utils';
+import { Order, DeliveryAssignment } from '@/lib/types';
 import { useRouter } from 'next/navigation';
-
-// Simplified types to avoid type errors
-interface OrderBase {
-  id: string;
-  status?: string;
-  createdAt: string;
-  deliveryAddress: string;
-  specialInstructions?: string;
-  totalPrice: number;
-}
+import { NextRequest } from 'next/server';
 
 interface DeliveryOrderListProps {
-  orders: OrderBase[];
+  orders: (Order | DeliveryAssignment)[];
   isLoading: boolean;
   type: 'active' | 'available';
 }
 
-export const DeliveryOrderList = ({
+export default function DeliveryOrderList({
   orders,
   isLoading,
   type,
-}: DeliveryOrderListProps) => {
+}: DeliveryOrderListProps) {
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const router = useRouter();
 
   const handleOrderSelect = (orderId: string) => {
     router.push(`/delivery/orders/${orderId}`);
   };
 
-  const handleUpdateStatus = async (orderId: string, newStatus: string) => {
-    try {
-      // Simulate API call
+  const { mutate: updateOrderStatus, isLoading: isUpdating } = useMutation({
+    mutationFn: async ({
+      orderId,
+      status,
+    }: {
+      orderId: string;
+      status: string;
+    }) => {
+      // TODO: Implement API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['active-deliveries']);
+      queryClient.invalidateQueries(['available-orders']);
       toast({
         title: 'Success',
         description: 'Order status updated successfully',
       });
-    } catch (error) {
+    },
+    onError: () => {
       toast({
         title: 'Error',
         description: 'Failed to update order status',
         variant: 'destructive',
       });
-    }
-  };
+    },
+  });
 
-  const handleAcceptOrder = async (orderId: string) => {
-    try {
-      // Simulate API call
+  const { mutate: acceptOrder, isLoading: isAccepting } = useMutation({
+    mutationFn: async (orderId: string) => {
+      // TODO: Implement API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['active-deliveries']);
+      queryClient.invalidateQueries(['available-orders']);
       toast({
         title: 'Success',
         description: 'Order accepted successfully',
       });
-    } catch (error) {
+    },
+    onError: () => {
       toast({
         title: 'Error',
         description: 'Failed to accept order',
         variant: 'destructive',
       });
-    }
-  };
+    },
+  });
 
   if (isLoading) {
     return <LoadingSpinner />;
@@ -89,7 +99,7 @@ export const DeliveryOrderList = ({
     );
   }
 
-  const getStatusColor = (status: string = 'pending') => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
         return 'bg-yellow-500';
@@ -110,13 +120,15 @@ export const DeliveryOrderList = ({
             <div>
               <p className="font-medium">Order #{order.id}</p>
               <p className="text-sm text-muted-foreground">
-                {order.createdAt}
+                {formatDate(order.createdAt)}
               </p>
             </div>
             <Badge
-              className={getStatusColor(order.status)}
+              className={getStatusColor(
+                'status' in order ? order.status : 'pending'
+              )}
             >
-              {order.status || 'Available'}
+              {'status' in order ? order.status : 'Available'}
             </Badge>
           </div>
 
@@ -147,9 +159,11 @@ export const DeliveryOrderList = ({
                   <p className="text-sm">
                     {order.deliveryAddress}
                   </p>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Note: {order.specialInstructions || 'No special instructions'}
-                  </p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Note: {order.specialInstructions}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -168,8 +182,12 @@ export const DeliveryOrderList = ({
               {type === 'available' ? (
                 <Button
                   className="w-full"
-                  onClick={() => handleAcceptOrder(order.id)}
+                  onClick={() => acceptOrder(order.id)}
+                  disabled={isAccepting}
                 >
+                    <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+                    <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+                  )}
                   Accept Order
                 </Button>
               ) : (
@@ -177,15 +195,21 @@ export const DeliveryOrderList = ({
                   <Button
                     className="w-full"
                     onClick={() =>
-                      handleUpdateStatus(
-                        order.id,
-                        order.status === 'assigned' ? 'picked up' : 'delivered'
-                      )
+                      updateOrderStatus({
+                        orderId: order.id,
+                          'status' in order && order.status === 'assigned'
+                            ? 'picked up'
+                            : 'delivered',
+                      })
                     }
+                    disabled={isUpdating}
                   >
-                    {order.status === 'assigned'
+                    {isUpdating && (
+                      <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    {('status' in order && order.status === 'assigned'
                       ? 'Mark as Picked Up'
-                      : 'Mark as Delivered'}
+                      : 'Mark as Delivered')}
                   </Button>
                 </div>
               )}
@@ -196,6 +220,3 @@ export const DeliveryOrderList = ({
     </div>
   );
 }
-
-// Also export as default for backward compatibility
-export default DeliveryOrderList;

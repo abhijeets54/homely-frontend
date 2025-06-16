@@ -11,7 +11,6 @@ import { useToast } from '@/components/ui/use-toast';
 import { formatPrice, formatDate } from '@/lib/utils';
 import { Order, DeliveryAssignment } from '@/lib/types';
 import { useRouter } from 'next/navigation';
-import { NextRequest } from 'next/server';
 
 interface DeliveryOrderListProps {
   orders: (Order | DeliveryAssignment)[];
@@ -19,7 +18,8 @@ interface DeliveryOrderListProps {
   type: 'active' | 'available';
 }
 
-export default function DeliveryOrderList({
+// Export both named and default for compatibility
+export function DeliveryOrderList({
   orders,
   isLoading,
   type,
@@ -159,7 +159,7 @@ export default function DeliveryOrderList({
                   <p className="text-sm">
                     {order.deliveryAddress}
                   </p>
-                    <p className="mt-2 text-sm text-muted-foreground">
+                  {order.specialInstructions && (
                     <p className="mt-2 text-sm text-muted-foreground">
                       Note: {order.specialInstructions}
                     </p>
@@ -185,7 +185,7 @@ export default function DeliveryOrderList({
                   onClick={() => acceptOrder(order.id)}
                   disabled={isAccepting}
                 >
-                    <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+                  {isAccepting && (
                     <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
                   )}
                   Accept Order
@@ -197,6 +197,7 @@ export default function DeliveryOrderList({
                     onClick={() =>
                       updateOrderStatus({
                         orderId: order.id,
+                        status:
                           'status' in order && order.status === 'assigned'
                             ? 'picked up'
                             : 'delivered',
@@ -207,9 +208,9 @@ export default function DeliveryOrderList({
                     {isUpdating && (
                       <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
                     )}
-                    {('status' in order && order.status === 'assigned'
+                    {'status' in order && order.status === 'assigned'
                       ? 'Mark as Picked Up'
-                      : 'Mark as Delivered')}
+                      : 'Mark as Delivered'}
                   </Button>
                 </div>
               )}
@@ -220,3 +221,6 @@ export default function DeliveryOrderList({
     </div>
   );
 }
+
+// Add default export for backwards compatibility
+export default DeliveryOrderList;

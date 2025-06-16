@@ -21,7 +21,7 @@ export * from './notification';
 
 // Re-export specific hooks or utilities
 import { useCart } from './cart';
-import { useGetCustomerOrders, useGetSellerOrders, useGetOrder } from './orders';
+import { useGetCustomerOrders, useGetSellerOrders, useGetOrder, useOrders } from './orders';
 import { usePayment, usePaymentByOrder } from './payment';
 import { useRestaurantReviews, useFoodItemReviews } from './review';
 import { useNotifications } from './notification';
@@ -31,6 +31,7 @@ export {
   useGetCustomerOrders,
   useGetSellerOrders,
   useGetOrder,
+  useOrders,
   usePayment, 
   usePaymentByOrder,
   useRestaurantReviews,

@@ -26,6 +26,19 @@ import { usePayment, usePaymentByOrder } from './payment';
 import { useRestaurantReviews, useFoodItemReviews } from './review';
 import { useNotifications } from './notification';
 
+// Create a unified useOrders hook that works for both customer and seller
+export const useOrders = (id: string, role: 'customer' | 'seller' = 'customer') => {
+  const customerOrdersQuery = useGetCustomerOrders(role === 'customer' ? id : '');
+  const sellerOrdersQuery = useGetSellerOrders(role === 'seller' ? id : '');
+  
+  // Return the appropriate query based on the role
+  if (role === 'customer') {
+    return customerOrdersQuery;
+  } else {
+    return sellerOrdersQuery;
+  }
+};
+
 export { 
   useCart, 
   useGetCustomerOrders,

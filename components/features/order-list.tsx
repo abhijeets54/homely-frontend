@@ -23,7 +23,7 @@ const orderStatusColors = {
   delivered: 'bg-green-500',
 };
 
-export default function OrderList({ orders, isLoading }: OrderListProps) {
+export const OrderList = ({ orders, isLoading }: OrderListProps) => {
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const router = useRouter();
 
@@ -154,3 +154,6 @@ export default function OrderList({ orders, isLoading }: OrderListProps) {
     </div>
   );
 }
+
+// Also export as default for backward compatibility
+export default OrderList;

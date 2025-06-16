@@ -26,11 +26,11 @@ interface DeliveryOrderListProps {
   type: 'active' | 'available';
 }
 
-export default function DeliveryOrderList({
+export const DeliveryOrderList = ({
   orders,
   isLoading,
   type,
-}: DeliveryOrderListProps) {
+}: DeliveryOrderListProps) => {
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const { toast } = useToast();
   const router = useRouter();
@@ -196,3 +196,6 @@ export default function DeliveryOrderList({
     </div>
   );
 }
+
+// Also export as default for backward compatibility
+export default DeliveryOrderList;

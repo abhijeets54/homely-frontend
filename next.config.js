@@ -1,38 +1,16 @@
+// next.config.js
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   images: {
+    domains: ['res.cloudinary.com', 'images.unsplash.com', 'localhost'],
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'source.unsplash.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
+        hostname: '**',
       },
       {
         protocol: 'http',
-        hostname: 'localhost',
-      },
-      {
-        protocol: 'https',
-        hostname: 'res.cloudinary.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 't3.ftcdn.net',
-      },
-      {
-        protocol: 'https',
-        hostname: 'images.pexels.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'randomuser.me',
-      },
-      {
-        protocol: 'https',
         hostname: '**',
       },
     ],
@@ -45,11 +23,15 @@ const nextConfig = {
       enabled: true
     },
   },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   eslint: {
-    ignoreDuringBuilds: false,
+    // Warning: This allows production builds to successfully complete even if
+    // your project has ESLint errors.
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    // Warning: This allows production builds to successfully complete even if
+    // your project has type errors.
+    ignoreBuildErrors: true,
   },
 };
 

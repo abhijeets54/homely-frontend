@@ -13,7 +13,6 @@ export * from './customer';
 export * from './seller';
 export * from './food';
 export * from './cart';
-export * from './delivery';
 export * from './payment';
 export * from './review';
 export * from './orders';
@@ -21,7 +20,7 @@ export * from './notification';
 
 // Re-export specific hooks or utilities
 import { useCart } from './cart';
-import { useGetCustomerOrders, useGetSellerOrders, useGetOrder, useOrders } from './orders';
+import { useGetCustomerOrders, useGetSellerOrders, useGetOrder } from './orders';
 import { usePayment, usePaymentByOrder } from './payment';
 import { useRestaurantReviews, useFoodItemReviews } from './review';
 import { useNotifications } from './notification';
@@ -31,7 +30,6 @@ export {
   useGetCustomerOrders,
   useGetSellerOrders,
   useGetOrder,
-  useOrders,
   usePayment, 
   usePaymentByOrder,
   useRestaurantReviews,
@@ -166,17 +164,8 @@ export const useCreateOrder = () => {
   });
 };
 
-// Delivery API
-export const useDeliveryAssignment = (orderId: string) => {
-  return useQuery({
-    queryKey: ['delivery', orderId],
-    queryFn: async () => {
-      const response = await api.get<DeliveryAssignment>(`/delivery/assignment/${orderId}`);
-      return response.data;
-    },
-    enabled: !!orderId,
-  });
-};
+// We keep the DeliveryAssignment type for Order status tracking
+// but remove the delivery API functionality
 
 // Payment API
 export const useCreatePayment = () => {

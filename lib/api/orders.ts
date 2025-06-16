@@ -166,21 +166,6 @@ export function useGetSellerOrders(restaurantId: string) {
   });
 }
 
-// Generic orders hook that works for both customers and sellers
-export function useOrders(userId: string, role: 'customer' | 'seller') {
-  return useQuery({
-    queryKey: ['orders', userId, role],
-    queryFn: () => {
-      if (role === 'customer') {
-        return orderApi.getCustomerOrders(userId);
-      } else {
-        return orderApi.getSellerOrders(userId);
-      }
-    },
-    enabled: !!userId
-  });
-}
-
 // Update order status
 export function useUpdateOrderStatus() {
   return useMutation({

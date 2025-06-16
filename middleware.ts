@@ -43,8 +43,7 @@ export function middleware(request: NextRequest) {
       if (token && userType) {
         const redirectUrl = new URL(
           userType === 'seller' ? '/seller/dashboard' : 
-          userType === 'customer' ? '/customer/dashboard' :
-          userType === 'delivery' ? '/delivery/dashboard' : '/',
+          userType === 'customer' ? '/customer/dashboard' : '/',
           request.url
         );
         return NextResponse.redirect(redirectUrl);
@@ -76,7 +75,6 @@ export function middleware(request: NextRequest) {
     // Role-based access control
     const isSellerRoute = pathname.startsWith('/seller');
     const isCustomerRoute = pathname.startsWith('/customer');
-    const isDeliveryRoute = pathname.startsWith('/delivery');
 
     // Redirect users based on their role
     if (userType === 'seller') {
@@ -84,12 +82,8 @@ export function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/seller/dashboard', request.url));
       }
     } else if (userType === 'customer') {
-      if ((isSellerRoute || isDeliveryRoute) && !isPublicPath) {
+      if (isSellerRoute && !isPublicPath) {
         return NextResponse.redirect(new URL('/customer/dashboard', request.url));
-      }
-    } else if (userType === 'delivery') {
-      if (!isDeliveryRoute && !isPublicPath) {
-        return NextResponse.redirect(new URL('/delivery/dashboard', request.url));
       }
     }
 

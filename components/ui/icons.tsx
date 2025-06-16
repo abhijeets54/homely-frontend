@@ -28,7 +28,7 @@ import {
   Heart,
   MapPin,
   LayoutDashboard,
-  BarChart,
+  BarChart3,
   LogOut,
   Home,
   ShoppingCart,
@@ -68,7 +68,7 @@ export const Icons = {
   heart: Heart,
   mapPin: MapPin,
   dashboard: LayoutDashboard,
-  analytics: BarChart,
+  analytics: BarChart3,
   logout: LogOut,
   home: Home,
   star: Star,
@@ -104,4 +104,4 @@ export const Icons = {
       />
     </svg>
   ),
-}; 
+};

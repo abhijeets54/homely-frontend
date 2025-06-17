@@ -18,6 +18,7 @@ import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useAuth } from '@/providers/auth-provider';
 import { Seller } from '@/lib/types/models';
+import { useLoadingState } from '@/lib/hooks/use-loading';
 import {
   Store,
   Clock,
@@ -53,6 +54,7 @@ export default function SellerProfilePage() {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const queryClient = useQueryClient();
+  const { withLoading } = useLoadingState();
 
   // Fetch seller profile
   const { 
@@ -102,7 +104,7 @@ export default function SellerProfilePage() {
 
   // Update profile mutation
   const updateProfileMutation = useMutation({
-    mutationFn: async (data: ProfileFormValues) => {
+    mutationFn: withLoading(async (data: ProfileFormValues) => {
       console.log('Updating profile with data:', data);
       
       try {
@@ -133,7 +135,7 @@ export default function SellerProfilePage() {
         console.error('Error in mutation function:', error);
         throw error;
       }
-    },
+    }),
     onSuccess: (data) => {
       console.log('Profile update success:', data);
       toast.success('Profile updated successfully');
@@ -349,17 +351,18 @@ export default function SellerProfilePage() {
                         
                         console.log('Submitting seller data:', sellerData);
                         
-                        // Call the API directly
-                        sellerApi.updateProfile(sellerData)
-                          .then(response => {
+                        // Call the API directly with loading state
+                        withLoading(async () => {
+                          try {
+                            const response = await sellerApi.updateProfile(sellerData);
                             console.log('Profile update success:', response);
                             toast.success('Profile updated successfully');
                             queryClient.invalidateQueries({ queryKey: ['seller-profile'] });
-                          })
-                          .catch(error => {
+                          } catch (error) {
                             console.error('Profile update error:', error);
                             toast.error('Failed to update profile');
-                          });
+                          }
+                        })();
                       }}
                     >
                       {updateProfileMutation.isPending ? 'Saving...' : 'Save Changes'}

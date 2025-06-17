@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useCart } from '@/components/providers/cart-provider';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -11,6 +11,7 @@ import { CartItem } from './cart-item';
 
 export function CartSheet() {
   const pathname = usePathname();
+  const router = useRouter();
   const { cart, cartItems, totalItems, totalPrice, isLoading } = useCart();
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
@@ -21,16 +22,15 @@ export function CartSheet() {
   }, [pathname]);
 
   const handleCheckout = () => {
+    // Always allow checkout, but inform non-authenticated users they'll need to login
     if (!isAuthenticated) {
       toast({
-        title: 'Please login',
-        description: 'You need to be logged in to checkout',
-        variant: 'destructive',
+        title: 'Guest checkout',
+        description: 'You can continue as a guest or login during checkout',
       });
-      return;
     }
     // Navigate to checkout page
-    window.location.href = '/checkout';
+    router.push('/checkout');
   };
 
   return (
@@ -48,7 +48,7 @@ export function CartSheet() {
             ) : (
               <div className="space-y-4">
                 {cartItems.map((item, index) => (
-                  <CartItem key={item.id || index} item={item as any} />
+                  <CartItem key={item.id || index} item={item} />
                 ))}
               </div>
             )}

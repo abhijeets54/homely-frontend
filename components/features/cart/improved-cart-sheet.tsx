@@ -113,23 +113,29 @@ export function ImprovedCartSheet() {
 
   // Helper function to safely access the foodItem's imageUrl
   const getImageUrl = (item: any): string => {
-    if (!item.foodItem) return '';
+    if (!item.foodItem) return '/images/default.jpg';
     
     // Try to access imageUrl from various possible structures
     if (typeof item.foodItem === 'object') {
-      // Handle case where foodItem is an object with imageUrl property
-      return (item.foodItem as CartFoodItem).imageUrl || '';
+      // Check for different image property names
+      if ('imageUrl' in item.foodItem && item.foodItem.imageUrl) {
+        return item.foodItem.imageUrl;
+      }
+      
+      if ('image' in item.foodItem && item.foodItem.image) {
+        return item.foodItem.image as string;
+      }
     }
     
-    return '';
+    return '/images/default.jpg';
   };
 
   // Helper function to safely access the foodItem's name
   const getName = (item: any): string => {
     if (!item.foodItem) return 'Unknown Item';
     
-    if (typeof item.foodItem === 'object') {
-      return (item.foodItem as CartFoodItem).name || 'Unknown Item';
+    if (typeof item.foodItem === 'object' && 'name' in item.foodItem) {
+      return item.foodItem.name;
     }
     
     return 'Unknown Item';

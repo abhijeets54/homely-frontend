@@ -4,10 +4,10 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Minus, Plus, Trash } from 'lucide-react';
 import { useCart } from '@/components/providers/cart-provider';
-import { CartItem as CartItemType } from '@/lib/types';
+import { LocalCartItem } from '@/lib/types/local-cart';
 
 interface CartItemProps {
-  item: CartItemType;
+  item: LocalCartItem;
 }
 
 export function CartItem({ item }: CartItemProps) {
@@ -21,18 +21,47 @@ export function CartItem({ item }: CartItemProps) {
     }
   };
 
+  // Safely get image URL from the item
+  const getImageUrl = () => {
+    if (!item.foodItem) return '/images/default.jpg';
+    
+    if (typeof item.foodItem === 'object') {
+      // Check for different image property names
+      if ('imageUrl' in item.foodItem && item.foodItem.imageUrl) {
+        return item.foodItem.imageUrl;
+      }
+      
+      if ('image' in item.foodItem && item.foodItem.image) {
+        return item.foodItem.image as string;
+      }
+    }
+    
+    return '/images/default.jpg';
+  };
+  
+  // Safely get food item name
+  const getName = () => {
+    if (!item.foodItem) return 'Food Item';
+    
+    if (typeof item.foodItem === 'object' && item.foodItem.name) {
+      return item.foodItem.name;
+    }
+    
+    return 'Food Item';
+  };
+
   return (
     <div className="flex items-center space-x-4">
       <div className="relative h-16 w-16 overflow-hidden rounded-lg">
         <Image
-          src={item.foodItem.image}
-          alt={item.foodItem.name}
+          src={getImageUrl()}
+          alt={getName()}
           fill
           className="object-cover"
         />
       </div>
       <div className="flex-1 space-y-1">
-        <h4 className="font-medium">{item.foodItem.name}</h4>
+        <h4 className="font-medium">{getName()}</h4>
         <p className="text-sm text-muted-foreground">
           ${item.price.toFixed(2)} × {item.quantity}
         </p>

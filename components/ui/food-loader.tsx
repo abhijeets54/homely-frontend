@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 
 interface FoodLoaderProps {
   size?: 'sm' | 'md' | 'lg';
-  variant?: 'plate' | 'cooking' | 'delivery';
+  variant?: 'plate' | 'cooking' | 'delivery' | 'pizza' | 'burger';
   className?: string;
   text?: string;
 }
@@ -195,6 +195,114 @@ const FoodLoader = ({
         </div>
         <p className={`mt-4 font-medium text-foreground ${sizeMap[size].text}`}>
           {text || 'Your order is on the way...'}
+        </p>
+      </div>
+    );
+  }
+
+  // Pizza Loader - Spinning pizza with toppings
+  if (variant === 'pizza') {
+    return (
+      <div className={`flex flex-col items-center justify-center ${className}`}>
+        <div className={`relative ${sizeMap[size].container}`}>
+          {/* Pizza base */}
+          <motion.div 
+            className="absolute inset-0 rounded-full bg-yellow-100 dark:bg-yellow-900 border-2 border-yellow-200 dark:border-yellow-800"
+            animate={{ rotate: 360 }}
+            transition={{ 
+              duration: 8, 
+              repeat: Infinity, 
+              ease: "linear" 
+            }}
+          >
+            {/* Pizza crust */}
+            <div className="absolute inset-1 rounded-full border-2 border-yellow-300 dark:border-yellow-700" />
+            
+            {/* Toppings */}
+            <div className="absolute inset-4 flex items-center justify-center">
+              <div className="absolute w-2 h-2 bg-red-500 rounded-full" style={{ top: '20%', left: '30%' }} />
+              <div className="absolute w-2 h-2 bg-red-500 rounded-full" style={{ top: '40%', left: '60%' }} />
+              <div className="absolute w-2 h-2 bg-red-500 rounded-full" style={{ top: '70%', left: '40%' }} />
+              <div className="absolute w-1.5 h-1.5 bg-green-700 rounded-full" style={{ top: '30%', left: '50%' }} />
+              <div className="absolute w-1.5 h-1.5 bg-green-700 rounded-full" style={{ top: '60%', left: '25%' }} />
+            </div>
+          </motion.div>
+        </div>
+        <p className={`mt-4 font-medium text-foreground ${sizeMap[size].text}`}>
+          {text || 'Baking your pizza...'}
+        </p>
+      </div>
+    );
+  }
+
+  // Burger Loader - Stacking burger layers
+  if (variant === 'burger') {
+    return (
+      <div className={`flex flex-col items-center justify-center ${className}`}>
+        <div className={`relative ${sizeMap[size].container}`}>
+          {/* Bottom bun */}
+          <div className="absolute w-full h-1/5 bg-yellow-300 dark:bg-yellow-700 rounded-b-xl bottom-0" />
+          
+          {/* Burger layers */}
+          <motion.div 
+            className="absolute w-full h-1/6 bg-amber-800 dark:bg-amber-900 bottom-[20%]"
+            animate={{ 
+              y: [0, -2, 0],
+              x: [0, 1, 0, -1, 0]
+            }}
+            transition={{ 
+              duration: 2, 
+              repeat: Infinity, 
+              ease: "easeInOut",
+              delay: 0.2
+            }}
+          />
+          
+          <motion.div 
+            className="absolute w-full h-1/6 bg-green-500 dark:bg-green-700 bottom-[calc(20%+16.7%)]"
+            animate={{ 
+              y: [0, -4, 0],
+              x: [0, 2, 0, -2, 0]
+            }}
+            transition={{ 
+              duration: 2, 
+              repeat: Infinity, 
+              ease: "easeInOut",
+              delay: 0.4
+            }}
+          />
+          
+          <motion.div 
+            className="absolute w-full h-1/6 bg-red-500 dark:bg-red-700 bottom-[calc(20%+33.4%)]"
+            animate={{ 
+              y: [0, -6, 0],
+              x: [0, 3, 0, -3, 0]
+            }}
+            transition={{ 
+              duration: 2, 
+              repeat: Infinity, 
+              ease: "easeInOut",
+              delay: 0.6
+            }}
+          />
+          
+          {/* Top bun */}
+          <motion.div 
+            className="absolute w-full h-1/4 bg-yellow-300 dark:bg-yellow-700 rounded-t-3xl bottom-[calc(20%+50%)]"
+            animate={{ 
+              y: [0, -8, 0],
+              x: [0, 4, 0, -4, 0]
+            }}
+            transition={{ 
+              duration: 2, 
+              repeat: Infinity, 
+              ease: "easeInOut",
+              delay: 0.8
+            }}
+          />
+        </div>
+        <p className={`mt-4 font-medium text-foreground ${sizeMap[size].text}`}>
+          {text || 'Assembling your burger...'}
         </p>
       </div>
     );

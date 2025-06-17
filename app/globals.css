@@ -73,28 +73,6 @@
   body {
     @apply bg-background text-foreground;
   }
-  
-  /* Improved typography */
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-bold tracking-tight;
-  }
-  
-  h1 {
-    @apply text-4xl md:text-5xl lg:text-6xl;
-  }
-  
-  h2 {
-    @apply text-3xl md:text-4xl;
-  }
-  
-  h3 {
-    @apply text-2xl md:text-3xl;
-  }
-  
-  /* Smooth scrolling */
-  html {
-    scroll-behavior: smooth;
-  }
 }
 
 @layer components {
@@ -109,6 +87,21 @@
 
   .section-title {
     @apply text-3xl font-bold text-center mb-8 text-primary;
+    position: relative;
+    display: inline-block;
+    padding-bottom: 0.5rem;
+  }
+
+  .section-title::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background-color: hsl(var(--primary));
+    border-radius: 3px;
   }
 
   .card {
@@ -178,90 +171,67 @@
   .responsive-grid {
     @apply grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6;
   }
-  
-  /* Enhanced button styles */
-  .btn-gradient {
-    @apply bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary transition-all duration-300 shadow-glow;
+
+  /* Animation utilities */
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
   }
-  
-  .btn-gradient-warm {
-    @apply bg-gradient-to-r from-spice to-curry hover:from-curry hover:to-spice transition-all duration-300 shadow-glow-warm;
+
+  .animate-pulse-subtle {
+    animation: pulse-subtle 2s ease-in-out infinite;
   }
-  
-  /* Enhanced card styles */
-  .card-hover {
-    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-lg;
+
+  .animate-bounce-subtle {
+    animation: bounce-subtle 2s ease-in-out infinite;
   }
-  
-  /* Gradient text */
-  .gradient-text {
-    @apply bg-gradient-to-r from-primary to-spice bg-clip-text text-transparent;
+
+  .hover-lift {
+    transition: transform 0.3s ease;
   }
-  
-  .gradient-text-warm {
-    @apply bg-gradient-to-r from-spice to-curry bg-clip-text text-transparent;
+
+  .hover-lift:hover {
+    transform: translateY(-5px);
   }
-  
-  /* Shadow styles */
-  .shadow-soft {
-    @apply shadow-[0_5px_15px_rgba(0,0,0,0.05)];
+
+  .hover-scale {
+    transition: transform 0.3s ease;
   }
-  
-  .shadow-medium {
-    @apply shadow-[0_8px_20px_rgba(0,0,0,0.1)];
-  }
-  
-  /* Glass effect */
-  .glass-effect {
-    @apply bg-white/70 backdrop-blur-md;
-  }
-  
-  .glass-effect-dark {
-    @apply bg-gray-900/70 backdrop-blur-md;
+
+  .hover-scale:hover {
+    transform: scale(1.05);
   }
 }
 
-/* Custom animations */
-.animate-float {
-  animation: float 3s ease-in-out infinite;
-}
-
+/* Custom keyframes for animations */
 @keyframes float {
-  0%, 100% {
-    transform: translateY(0);
+  0% {
+    transform: translateY(0px);
   }
   50% {
     transform: translateY(-10px);
   }
+  100% {
+    transform: translateY(0px);
+  }
 }
 
-/* Image hover effects */
-.img-hover-zoom {
-  overflow: hidden;
+@keyframes pulse-subtle {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.03);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
-.img-hover-zoom img {
-  transition: transform 0.5s ease;
-}
-
-.img-hover-zoom:hover img {
-  transform: scale(1.05);
-}
-
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 10px;
-}
-
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #8A2BE2;
-  border-radius: 5px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #6A1CB9;
+@keyframes bounce-subtle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
 }

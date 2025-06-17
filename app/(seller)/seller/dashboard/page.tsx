@@ -319,7 +319,7 @@ export default function SellerDashboardPage() {
                       )}
                     </div>
                     <div className="text-right">
-                      <p className="font-medium">₹{formatPrice(order.totalPrice || 0)}</p>
+                      <p className="font-medium">{formatPrice(order.totalPrice || 0)}</p>
                       <p className="text-sm text-gray-500 capitalize">{order.status || 'Unknown'}</p>
                     </div>
                   </div>

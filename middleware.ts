@@ -10,7 +10,7 @@ export function middleware(request: NextRequest) {
     const userType = request.cookies.get('userType')?.value;
 
     // Public paths that don't require authentication
-    const publicPaths = ['/', '/about', '/contact', '/test-routing', '/sellers', '/checkout/success', '/terms', '/privacy'];
+    const publicPaths = ['/', '/about', '/contact', '/test-routing', '/sellers', '/checkout/success'];
     const isPublicPath = publicPaths.some(path => 
       pathname === path || 
       pathname.startsWith('/sellers/') ||

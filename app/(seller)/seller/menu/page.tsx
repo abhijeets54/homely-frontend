@@ -155,7 +155,10 @@ export default function SellerMenuPage() {
         <div className="container py-12 text-center">
           <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
           <p className="mb-6">Please log in to manage your menu.</p>
-          <Button asChild>
+          <Button 
+            asChild
+            className="bg-primary hover:bg-primary-dark text-white font-medium shadow-md hover:shadow-lg transition-all"
+          >
             <Link href="/login">Login</Link>
           </Button>
         </div>
@@ -178,7 +181,12 @@ export default function SellerMenuPage() {
               </p>
             </CardContent>
             <CardFooter>
-              <Button onClick={() => location.reload()}>Retry</Button>
+              <Button 
+                onClick={() => location.reload()}
+                className="bg-primary hover:bg-primary-dark text-white font-medium shadow-md hover:shadow-lg transition-all"
+              >
+                Retry
+              </Button>
             </CardFooter>
           </Card>
         </div>
@@ -195,10 +203,17 @@ export default function SellerMenuPage() {
             <p className="text-muted-foreground">Manage your items and categories</p>
           </div>
           <div className="flex gap-2">
-            <Button asChild>
+            <Button 
+              asChild 
+              className="bg-primary hover:bg-primary-dark text-white font-medium shadow-md hover:shadow-lg transition-all"
+            >
               <Link href="/seller/menu/items/new">Add Item</Link>
             </Button>
-            <Button variant="outline" asChild>
+            <Button 
+              variant="outline" 
+              asChild 
+              className="border-primary text-primary hover:bg-primary/10 hover:text-primary-dark font-medium shadow-sm hover:shadow-md transition-all"
+            >
               <Link href="/seller/menu/categories/new">Add Category</Link>
             </Button>
           </div>
@@ -223,7 +238,7 @@ export default function SellerMenuPage() {
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                   <select
-                    className="border rounded-md px-3 py-2"
+                    className="border border-primary/30 rounded-md px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all"
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
                   >
@@ -262,10 +277,19 @@ export default function SellerMenuPage() {
                             />
                           </div>
                           <div className="mt-4 flex gap-2">
-                            <Button size="sm" asChild>
+                            <Button 
+                              size="sm" 
+                              asChild
+                              className="bg-primary hover:bg-primary-dark text-white shadow-sm hover:shadow-md transition-all"
+                            >
                               <Link href={`/seller/menu/items/${item.id}`}>Edit</Link>
                             </Button>
-                            <Button size="sm" variant="destructive" onClick={() => handleDeleteItem(item.id)}>
+                            <Button 
+                              size="sm" 
+                              variant="destructive" 
+                              onClick={() => handleDeleteItem(item.id)}
+                              className="hover:bg-destructive/90 shadow-sm hover:shadow-md transition-all"
+                            >
                               Delete
                             </Button>
                           </div>
@@ -299,7 +323,11 @@ export default function SellerMenuPage() {
                             </p>
                           </div>
                           <div className="flex gap-2">
-                            <Button size="sm" asChild>
+                            <Button 
+                              size="sm" 
+                              asChild
+                              className="bg-primary hover:bg-primary-dark text-white shadow-sm hover:shadow-md transition-all"
+                            >
                               <Link href={`/seller/menu/categories/${cat.id}`}>Edit</Link>
                             </Button>
                             <Button
@@ -307,6 +335,7 @@ export default function SellerMenuPage() {
                               variant="destructive"
                               onClick={() => handleDeleteCategory(cat.id)}
                               disabled={hasItems}
+                              className="hover:bg-destructive/90 shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               Delete
                             </Button>

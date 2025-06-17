@@ -26,7 +26,6 @@ import {
 } from '@/components/ui/sheet';
 import { formatPrice } from '@/lib/utils/format';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import LoadingLink from '@/components/ui/loading-link';
 
 export function Header() {
   const pathname = usePathname();
@@ -56,48 +55,48 @@ export function Header() {
     <header className="bg-white shadow-sm sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         {/* Logo */}
-        <LoadingLink href="/" className="flex items-center">
+        <Link href="/" className="flex items-center">
           <span className="text-2xl font-bold text-primary">Homely</span>
-        </LoadingLink>
+        </Link>
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-8">
-          <LoadingLink 
+          <Link 
             href="/" 
             className={`nav-link ${isActive('/') ? 'nav-link-active' : ''}`}
           >
             Home
-          </LoadingLink>
-          <LoadingLink 
+          </Link>
+          <Link 
             href="/sellers" 
             className={`nav-link ${isActive('/sellers') ? 'nav-link-active' : ''}`}
           >
             Sellers
-          </LoadingLink>
+          </Link>
           {isAuthenticated && role === 'customer' && (
             <>
-              <LoadingLink 
+              <Link 
                 href="/customer/dashboard" 
                 className={`nav-link ${isActive('/customer/dashboard') ? 'nav-link-active' : ''}`}
               >
                 Dashboard
-              </LoadingLink>
+              </Link>
             </>
           )}
           {isAuthenticated && role === 'seller' && (
             <>
-              <LoadingLink 
+              <Link 
                 href="/seller/dashboard" 
                 className={`nav-link ${isActive('/seller/dashboard') ? 'nav-link-active' : ''}`}
               >
                 Dashboard
-              </LoadingLink>
-              <LoadingLink 
+              </Link>
+              <Link 
                 href="/seller/menu" 
                 className={`nav-link ${isActive('/seller/menu') ? 'nav-link-active' : ''}`}
               >
                 Menu
-              </LoadingLink>
+              </Link>
             </>
           )}
         </nav>
@@ -117,10 +116,10 @@ export function Header() {
           ) : !isAuthenticated ? (
             <div className="flex items-center space-x-2">
               <Button variant="outline" size="sm" asChild>
-                <LoadingLink href="/login">Login</LoadingLink>
+                <Link href="/login">Login</Link>
               </Button>
               <Button size="sm" asChild>
-                <LoadingLink href="/register">Register</LoadingLink>
+                <Link href="/register">Register</Link>
               </Button>
             </div>
           ) : (
@@ -142,11 +141,11 @@ export function Header() {
                 <DropdownMenuSeparator />
                 {role === 'seller' && (
                   <DropdownMenuItem asChild>
-                    <LoadingLink href="/seller/profile">Profile</LoadingLink>
+                    <Link href="/seller/profile">Profile</Link>
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem asChild>
-                  <LoadingLink href={`/${role}/dashboard`}>Dashboard</LoadingLink>
+                  <Link href={`/${role}/dashboard`}>Dashboard</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => logout()}>

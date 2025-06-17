@@ -12,19 +12,13 @@ interface CartItemProps {
 
 export function CartItem({ item }: CartItemProps) {
   const { updateCartItem, removeFromCart } = useCart();
-
-  const handleQuantityDecrease = () => {
-    if (item.quantity > 1) {
-      updateCartItem(item.id, item.quantity - 1);
+  
+  const handleQuantityChange = async (newQuantity: number) => {
+    if (newQuantity <= 0) {
+      await removeFromCart(item.id);
+    } else {
+      await updateCartItem(item.id, newQuantity);
     }
-  };
-
-  const handleQuantityIncrease = () => {
-    updateCartItem(item.id, item.quantity + 1);
-  };
-
-  const handleRemoveItem = () => {
-    removeFromCart(item.id);
   };
 
   return (
@@ -48,7 +42,7 @@ export function CartItem({ item }: CartItemProps) {
           variant="outline"
           size="icon"
           className="h-8 w-8"
-          onClick={handleQuantityDecrease}
+          onClick={() => handleQuantityChange(item.quantity - 1)}
           disabled={item.quantity <= 1}
         >
           <Minus className="h-3 w-3" />
@@ -59,7 +53,7 @@ export function CartItem({ item }: CartItemProps) {
           variant="outline"
           size="icon"
           className="h-8 w-8"
-          onClick={handleQuantityIncrease}
+          onClick={() => handleQuantityChange(item.quantity + 1)}
         >
           <Plus className="h-3 w-3" />
           <span className="sr-only">Add one item</span>
@@ -68,7 +62,7 @@ export function CartItem({ item }: CartItemProps) {
           variant="outline"
           size="icon"
           className="h-8 w-8"
-          onClick={handleRemoveItem}
+          onClick={() => removeFromCart(item.id)}
         >
           <Trash className="h-3 w-3" />
           <span className="sr-only">Remove item</span>

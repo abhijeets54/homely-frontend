@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { useCart } from '@/components/providers/cart-provider';
 import { Button } from '@/components/ui/button';
@@ -11,21 +11,13 @@ import { CartItem } from './cart-item';
 
 export function CartSheet() {
   const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(false);
-  const { cartItems, totalPrice, setOpenCartCallback } = useCart();
+  const { cart, cartItems, totalItems, totalPrice, isLoading } = useCart();
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
 
-  // Register the open cart callback when the component mounts
-  useEffect(() => {
-    setOpenCartCallback(() => {
-      setIsOpen(true);
-    });
-  }, [setOpenCartCallback]);
-
   // Close cart on route change
   useEffect(() => {
-    setIsOpen(false);
+    // This is handled in ImprovedCartSheet now
   }, [pathname]);
 
   const handleCheckout = () => {
@@ -37,11 +29,12 @@ export function CartSheet() {
       });
       return;
     }
-    // Handle checkout logic
+    // Navigate to checkout page
+    window.location.href = '/checkout';
   };
 
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
+    <Sheet>
       <SheetContent className="w-full sm:max-w-lg">
         <SheetHeader>
           <SheetTitle>Your Cart</SheetTitle>
@@ -69,8 +62,9 @@ export function CartSheet() {
               <Button
                 className="w-full"
                 onClick={handleCheckout}
+                disabled={isLoading}
               >
-                Proceed to Checkout
+                {isLoading ? 'Loading...' : 'Proceed to Checkout'}
               </Button>
             </div>
           )}

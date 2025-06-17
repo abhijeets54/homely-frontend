@@ -139,6 +139,11 @@ export function Header() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                {role === 'seller' && (
+                  <DropdownMenuItem asChild>
+                    <Link href="/seller/profile">Profile</Link>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem asChild>
                   <Link href={`/${role}/dashboard`}>Dashboard</Link>
                 </DropdownMenuItem>

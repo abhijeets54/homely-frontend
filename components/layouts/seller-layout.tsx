@@ -17,6 +17,7 @@ import {
   Menu as MenuIcon,
   Settings,
   Store,
+  User,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -32,6 +33,11 @@ const sidebarItems = [
     title: 'Menu Management',
     href: '/seller/menu',
     icon: MenuIcon,
+  },
+  {
+    title: 'Profile',
+    href: '/seller/profile',
+    icon: User,
   },
   {
     title: 'Store Settings',

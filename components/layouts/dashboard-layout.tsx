@@ -59,6 +59,11 @@ const sellerNavItems: NavItem[] = [
     icon: 'analytics',
   },
   {
+    title: 'Profile',
+    href: '/seller/profile',
+    icon: 'user',
+  },
+  {
     title: 'Settings',
     href: '/seller/settings',
     icon: 'settings',

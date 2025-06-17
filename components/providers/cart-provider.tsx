@@ -160,6 +160,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           const message = error instanceof Error ? error.message : 'Failed to add item to cart';
           toast.error(message);
           console.error('Failed to add to cart:', error);
+          
+          // Ensure UI is in sync if backend operation fails
+          await loadServerCart();
         } finally {
           setIsLoading(false);
         }
@@ -176,12 +179,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   // Update cart item quantity
   const updateCartItem = async (cartItemId: string, quantity: number) => {
     try {
-      console.log('Updating cart item:', { cartItemId, quantity, isAuthenticated });
-      
-      // For non-authenticated users, use the local Zustand store
-      if (!isAuthenticated) {
+      // Handle local cart update through Zustand
+      if (cartItemId.startsWith('local-') || !isAuthenticated) {
         // Find matching item in Zustand store
-        const zustandItem = cartStore.items.find(item => item.id === cartItemId);
+        const zustandItem = cartStore.items.find(item => {
+          // Match either by id or by foodItemId
+          return item.id === cartItemId || 
+                 (cartItemId.includes(item.foodItemId) || 
+                 (typeof item.foodItem === 'object' && item.foodItem?.id === cartItemId));
+        });
         
         if (zustandItem) {
           if (quantity <= 0) {
@@ -196,13 +202,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
       }
       
-      // For authenticated users, update through backend API
+      // Handle backend cart update for authenticated users
       setIsLoading(true);
       try {
-        console.log('Sending update request to backend for item:', cartItemId);
         const updatedCart = await cartApi.updateCartItem(cartItemId, quantity);
+        // Use type assertion to handle any inconsistencies between Cart types
         setServerCart(updatedCart as unknown as Cart);
-        console.log('Cart updated successfully on server');
       } catch (error) {
         console.error('Error updating cart item:', error);
         toast.error('Failed to update item quantity');
@@ -221,33 +226,34 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   // Remove item from cart
   const removeFromCart = async (cartItemId: string) => {
     try {
-      console.log('Removing item from cart:', { cartItemId, isAuthenticated });
-      setIsLoading(true);
-      
-      // For non-authenticated users, use the local Zustand store
-      if (!isAuthenticated) {
+      // Handle local cart removal through Zustand
+      if (cartItemId.startsWith('local-') || !isAuthenticated) {
         // Find the item in Zustand store
-        const zustandItem = cartStore.items.find(item => item.id === cartItemId);
+        const zustandItem = cartStore.items.find(item => {
+          // Match either by id or by foodItemId
+          return item.id === cartItemId || 
+                 cartItemId.includes(item.foodItemId) || 
+                 (typeof item.foodItem === 'object' && item.foodItem?.id === cartItemId);
+        });
         
         if (zustandItem) {
           cartStore.removeItem(zustandItem.id);
           toast.success('Item removed from cart');
-        } else {
-          console.error('Item not found in local cart:', cartItemId);
         }
-        setIsLoading(false);
         return;
       }
       
-      // For authenticated users, remove through backend API
+      // Handle backend cart removal for authenticated users
+      setIsLoading(true);
       try {
-        console.log('Sending remove request to backend for item:', cartItemId);
         const updatedCart = await cartApi.removeFromCart(cartItemId);
+        // Use type assertion to handle any inconsistencies between Cart types
         setServerCart(updatedCart as unknown as Cart);
         toast.success('Item removed from cart');
       } catch (error) {
-        console.error('Error removing cart item:', error);
-        toast.error('Failed to remove item from cart');
+        const message = error instanceof Error ? error.message : 'Failed to remove item from cart';
+        toast.error(message);
+        console.error('Failed to remove from cart:', error);
         
         // Reload cart to ensure UI is in sync with server state
         await loadServerCart();
@@ -257,7 +263,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Error in removeFromCart:', error);
       toast.error('Failed to remove item from cart');
-      setIsLoading(false);
+      // Only set loading to false if we're authenticated and had set it to true earlier
+      if (isAuthenticated) {
+        setIsLoading(false);
+      }
     }
   };
 

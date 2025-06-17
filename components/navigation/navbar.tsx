@@ -53,12 +53,12 @@ export function Navbar() {
                 >
                   Menu
                 </Link>
-                <Link
+                {/* <Link
                   href="/seller/orders"
                   className="transition-colors hover:text-foreground/80 text-foreground/60"
                 >
                   Orders
-                </Link>
+                </Link> */}
               </>
             ) : null}
           </div>

@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { ShoppingCart, User, LogOut, Settings, Bell } from 'lucide-react';
+import { ShoppingCart, LogOut, Settings, Bell } from 'lucide-react';
 import { NotificationsDropdown } from '@/components/features/notifications';
 
 export function Navbar() {
@@ -47,12 +47,6 @@ export function Navbar() {
                 >
                   Menu
                 </Link>
-                {/* <Link
-                  href="/seller/orders"
-                  className="transition-colors hover:text-foreground/80 text-foreground/60"
-                >
-                  Orders
-                </Link> */}
               </>
             ) : null}
           </div>
@@ -95,17 +89,6 @@ export function Navbar() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-56" align="end" forceMount>
-                    {role !== 'customer' && (
-                      <DropdownMenuItem asChild>
-                        <Link
-                          href={`/${role}/profile`}
-                          className="flex items-center"
-                        >
-                          <User className="mr-2 h-4 w-4" />
-                          <span>Profile</span>
-                        </Link>
-                      </DropdownMenuItem>
-                    )}
                     <DropdownMenuItem asChild>
                       <Link
                         href={`/${role}/notifications`}

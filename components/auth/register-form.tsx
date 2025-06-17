@@ -51,7 +51,6 @@ const customerSellerSchema = z.object({
   address: z.string().min(5, 'Please enter a valid address'),
   phoneNumber: z.string().min(10, 'Please enter a valid phone number'),
   role: z.enum(['customer', 'seller']),
-  imageUrl: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -80,7 +79,6 @@ export function RegisterForm() {
       address: '',
       phoneNumber: '',
       role: 'customer' as const,
-      imageUrl: '',
     },
   });
 
@@ -297,29 +295,6 @@ export function RegisterForm() {
                     <SelectItem value="car">Car</SelectItem>
                   </SelectContent>
                 </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
-        
-        {form.watch('role') === 'seller' && (
-          <FormField
-            control={form.control}
-            name="imageUrl"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Restaurant Cover Image</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="Enter image filename (e.g. restaurant.jpg)"
-                    disabled={isLoading}
-                    {...field}
-                  />
-                </FormControl>
-                <p className="text-xs text-muted-foreground">
-                  Enter just the filename. The image should be in the uploads/seller folder.
-                </p>
                 <FormMessage />
               </FormItem>
             )}

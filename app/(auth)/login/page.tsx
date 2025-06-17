@@ -1,15 +1,9 @@
 'use client';
 
-import { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { LoginForm } from '@/components/forms/login-form';
 import { motion, Variants } from 'framer-motion';
-
-export const metadata: Metadata = {
-  title: 'Login | Homely',
-  description: 'Login to your Homely account',
-};
 
 export default function LoginPage() {
   const containerVariants: Variants = {

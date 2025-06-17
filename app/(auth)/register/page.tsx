@@ -1,15 +1,9 @@
 'use client';
 
-import { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { RegisterForm } from '@/components/forms/register-form';
 import { motion, Variants } from 'framer-motion';
-
-export const metadata: Metadata = {
-  title: 'Register | Homely',
-  description: 'Create a new account on Homely',
-};
 
 export default function RegisterPage() {
   const containerVariants: Variants = {

@@ -1,10 +1,8 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { useRouter } from 'next/navigation';
 import FoodLoader from '../ui/food-loader';
-import NavigationEvents from './navigation-events';
 
 type LoaderVariant = 'plate' | 'cooking' | 'delivery' | 'pizza' | 'burger';
 
@@ -28,33 +26,11 @@ export const useLoading = () => {
 export function LoadingProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [variant, setVariant] = useState<LoaderVariant>('cooking');
+  const initialRenderComplete = useRef(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [prevPathname, setPrevPathname] = useState(pathname);
-  const [prevSearchParams, setPrevSearchParams] = useState(searchParams);
-  
-  // Track navigation changes
-  useEffect(() => {
-    // Check if path or search params changed
-    const pathChanged = prevPathname !== pathname;
-    const searchChanged = prevSearchParams.toString() !== searchParams.toString();
-    
-    if (pathChanged || searchChanged) {
-      // Navigation detected - show loader
-      setIsLoading(true);
-      
-      // Store current values for next comparison
-      setPrevPathname(pathname);
-      setPrevSearchParams(searchParams);
-      
-      // Hide loader after a delay to ensure it's visible during navigation
-      const timer = setTimeout(() => {
-        setIsLoading(false);
-      }, 1000); // Longer delay to ensure visibility
-      
-      return () => clearTimeout(timer);
-    }
-  }, [pathname, searchParams, prevPathname, prevSearchParams]);
+  const prevPathnameRef = useRef(pathname);
+  const prevSearchParamsRef = useRef(searchParams.toString());
   
   // Get a random loader variant
   const getRandomVariant = (): LoaderVariant => {
@@ -69,21 +45,62 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
     }
   }, [isLoading]);
   
-  // Initial page load
+  // Mark initial render complete after hydration
   useEffect(() => {
-    // Show loader briefly on initial load
-    setIsLoading(true);
-    const timer = setTimeout(() => setIsLoading(false), 800);
-    return () => clearTimeout(timer);
+    initialRenderComplete.current = true;
+  }, []);
+
+  // Handle navigation changes
+  useEffect(() => {
+    // Skip the initial render
+    if (!initialRenderComplete.current) return;
+    
+    // Check if this is a navigation event
+    const currentPathname = pathname;
+    const currentSearchParams = searchParams.toString();
+    
+    if (
+      currentPathname !== prevPathnameRef.current || 
+      currentSearchParams !== prevSearchParamsRef.current
+    ) {
+      // Navigation detected - show loader
+      setIsLoading(true);
+      
+      // Update refs for next comparison
+      prevPathnameRef.current = currentPathname;
+      prevSearchParamsRef.current = currentSearchParams;
+      
+      // Hide loader after navigation completes
+      const timer = setTimeout(() => {
+        setIsLoading(false);
+      }, 800);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [pathname, searchParams]);
+
+  // Handle popstate events (browser back/forward)
+  useEffect(() => {
+    const handlePopState = () => {
+      if (initialRenderComplete.current) {
+        setIsLoading(true);
+        
+        const timer = setTimeout(() => {
+          setIsLoading(false);
+        }, 800);
+        
+        return () => clearTimeout(timer);
+      }
+    };
+    
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
   return (
     <LoadingContext.Provider value={{ isLoading, setIsLoading, variant, setVariant }}>
-      {/* Navigation events listener */}
-      <NavigationEvents />
-      
-      {/* Loading overlay */}
-      {isLoading && (
+      {/* Loading overlay - only show after initial render is complete */}
+      {isLoading && initialRenderComplete.current && (
         <div className="fixed inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-50">
           <FoodLoader variant={variant} size="lg" />
         </div>

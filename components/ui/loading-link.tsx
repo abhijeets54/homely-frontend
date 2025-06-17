@@ -11,7 +11,6 @@ interface LoadingLinkProps {
   className?: string;
   prefetch?: boolean;
   onClick?: () => void;
-  loadingDelay?: number;
 }
 
 /**
@@ -23,25 +22,17 @@ export function LoadingLink({
   className,
   prefetch = true,
   onClick,
-  loadingDelay = 300,
   ...props
 }: LoadingLinkProps & Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, 'href'>) {
   const router = useRouter();
   const { startLoading } = useLoadingState();
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
-    
     // Call the provided onClick handler if any
     if (onClick) onClick();
     
-    // Start the loading animation
-    startLoading();
-    
-    // Navigate after a small delay to ensure the loader is visible
-    setTimeout(() => {
-      router.push(href);
-    }, loadingDelay);
+    // Let the default navigation happen
+    // The loading provider will detect the navigation and show the loader
   };
 
   return (

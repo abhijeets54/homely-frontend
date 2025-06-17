@@ -8,36 +8,25 @@ import { useLoadingState } from '@/lib/hooks/use-loading';
  */
 export const useNavigation = () => {
   const router = useRouter();
-  const { startLoading } = useLoadingState();
   
   /**
-   * Navigate to a new page with loading state
+   * Navigate to a new page
    * @param href - The URL to navigate to
-   * @param options - Navigation options
    */
-  const navigate = (href: string, options?: { delay?: number }) => {
-    // Start the loading animation
-    startLoading();
-    
-    // Navigate after a small delay to ensure the loader is visible
-    setTimeout(() => {
-      router.push(href);
-    }, options?.delay || 300);
+  const navigate = (href: string) => {
+    // Just use the router directly
+    // The loading provider will detect the navigation and show the loader
+    router.push(href);
   };
   
   /**
-   * Replace the current URL with a new one with loading state
+   * Replace the current URL with a new one
    * @param href - The URL to navigate to
-   * @param options - Navigation options
    */
-  const replace = (href: string, options?: { delay?: number }) => {
-    // Start the loading animation
-    startLoading();
-    
-    // Navigate after a small delay to ensure the loader is visible
-    setTimeout(() => {
-      router.replace(href);
-    }, options?.delay || 300);
+  const replace = (href: string) => {
+    // Just use the router directly
+    // The loading provider will detect the navigation and show the loader
+    router.replace(href);
   };
   
   return {

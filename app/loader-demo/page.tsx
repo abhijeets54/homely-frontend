@@ -9,6 +9,7 @@ import { useLoadingState } from '@/lib/hooks/use-loading';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
+import LoadingLink from '@/components/ui/loading-link';
 
 export default function LoaderDemoPage() {
   const router = useRouter();
@@ -59,14 +60,14 @@ export default function LoaderDemoPage() {
             </div>
             
             <div className="flex flex-wrap gap-4">
-              <Button onClick={() => router.push('/')}>
-                Go to Home
+              <Button asChild>
+                <LoadingLink href="/">Go to Home</LoadingLink>
               </Button>
-              <Button onClick={() => router.push('/restaurants')}>
-                Go to Restaurants
+              <Button asChild>
+                <LoadingLink href="/restaurants">Go to Restaurants</LoadingLink>
               </Button>
-              <Button onClick={() => router.push('/about')}>
-                Go to About
+              <Button asChild>
+                <LoadingLink href="/about">Go to About</LoadingLink>
               </Button>
             </div>
           </Card>

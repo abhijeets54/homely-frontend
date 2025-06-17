@@ -73,6 +73,28 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Improved typography */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold tracking-tight;
+  }
+  
+  h1 {
+    @apply text-4xl md:text-5xl lg:text-6xl;
+  }
+  
+  h2 {
+    @apply text-3xl md:text-4xl;
+  }
+  
+  h3 {
+    @apply text-2xl md:text-3xl;
+  }
+  
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 @layer components {
@@ -156,4 +178,90 @@
   .responsive-grid {
     @apply grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6;
   }
+  
+  /* Enhanced button styles */
+  .btn-gradient {
+    @apply bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary transition-all duration-300 shadow-glow;
+  }
+  
+  .btn-gradient-warm {
+    @apply bg-gradient-to-r from-spice to-curry hover:from-curry hover:to-spice transition-all duration-300 shadow-glow-warm;
+  }
+  
+  /* Enhanced card styles */
+  .card-hover {
+    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-lg;
+  }
+  
+  /* Gradient text */
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary to-spice bg-clip-text text-transparent;
+  }
+  
+  .gradient-text-warm {
+    @apply bg-gradient-to-r from-spice to-curry bg-clip-text text-transparent;
+  }
+  
+  /* Shadow styles */
+  .shadow-soft {
+    @apply shadow-[0_5px_15px_rgba(0,0,0,0.05)];
+  }
+  
+  .shadow-medium {
+    @apply shadow-[0_8px_20px_rgba(0,0,0,0.1)];
+  }
+  
+  /* Glass effect */
+  .glass-effect {
+    @apply bg-white/70 backdrop-blur-md;
+  }
+  
+  .glass-effect-dark {
+    @apply bg-gray-900/70 backdrop-blur-md;
+  }
+}
+
+/* Custom animations */
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Image hover effects */
+.img-hover-zoom {
+  overflow: hidden;
+}
+
+.img-hover-zoom img {
+  transition: transform 0.5s ease;
+}
+
+.img-hover-zoom:hover img {
+  transform: scale(1.05);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #8A2BE2;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #6A1CB9;
 }

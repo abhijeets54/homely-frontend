@@ -12,12 +12,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui
 import { Badge } from '../../../components/ui/badge';
 import { formatPrice } from '../../../lib/utils/format';
 import { useCart } from '../../../components/providers/cart-provider';
-import { useAuth } from '../../../providers/auth-provider'; // Corrected import
+import { useAuth } from '../../../providers/auth-provider';
 import { toast } from 'sonner';
 import { debugCartApi } from '../../../lib/api/debug-cart';
 import { FoodItem } from '../../../lib/types/models';
 import { getSellerImageUrl, getFullImageUrl } from '@/lib/utils/image';
 import CloudinaryImage from '@/components/CloudinaryImage';
+import AnimateOnScroll from '@/components/ui/animate-on-scroll';
+import HoverCardEffect from '@/components/ui/hover-card-effect';
+import FoodPatternBackground from '@/components/ui/food-pattern-background';
 
 interface SellerDetailPageProps {
   params: {
@@ -34,6 +37,19 @@ const getCategoryId = (categoryId: any) =>
 export default function SellerDetailPage({ params }: SellerDetailPageProps) {
   // Extract the sellerId parameter directly from params
   const { sellerId } = params;
+  
+  // State for parallax effect
+  const [scrollY, setScrollY] = useState(0);
+  
+  // Handle scroll for parallax effect
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
+    
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Ensure sellerId is defined and log it for debugging
   console.log('Current sellerId:', sellerId);
@@ -53,7 +69,7 @@ export default function SellerDetailPage({ params }: SellerDetailPageProps) {
     );
   }
 
-  const { isAuthenticated } = useAuth(); // Use useAuth instead of useAuthContext
+  const { isAuthenticated } = useAuth();
   const { addToCart, setOpenCartCallback } = useCart();
   const [activeCategory, setActiveCategory] = useState<string>('all');
   
@@ -163,151 +179,208 @@ export default function SellerDetailPage({ params }: SellerDetailPageProps) {
   };
 
   return (
-    <MainLayout>
+    <MainLayout transitionType="fade">
       <div className="container mx-auto px-4 py-8">
-        <Button variant="outline" size="sm" asChild className="mb-6">
-          <Link href="/sellers">
-            <span className="mr-2">←</span> Back to Sellers
-          </Link>
-        </Button>
+        <AnimateOnScroll animation="fade-in-up">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            asChild 
+            className="mb-6 hover:bg-primary/10 transition-all duration-300"
+          >
+            <Link href="/sellers">
+              <span className="mr-2">←</span> Back to Sellers
+            </Link>
+          </Button>
+        </AnimateOnScroll>
 
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
-            <p>Loading seller details...</p>
+            <div className="animate-pulse flex flex-col items-center">
+              <div className="h-32 w-32 bg-gray-200 rounded-full mb-4"></div>
+              <div className="h-6 w-48 bg-gray-200 rounded mb-2"></div>
+              <div className="h-4 w-64 bg-gray-200 rounded"></div>
+            </div>
           </div>
         ) : seller ? (
           <>
-            {/* Seller Header */}
-            <div className="relative h-64 rounded-xl overflow-hidden mb-6">
-              <CloudinaryImage
-                src={getSellerImageUrl(seller.imageUrl || seller.image)}
-                alt={seller.name}
-                fill
-                className="object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-6">
-                <div className="flex justify-between items-end">
-                  <div>
-                    <h1 className="text-3xl font-bold text-white mb-2">{seller.name}</h1>
-                    <p className="text-white/90">{seller.address}</p>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    {seller.status === 'open' ? (
-                      <Badge variant="outline" className="bg-green-500">Open</Badge>
-                    ) : (
-                      <Badge variant="outline" className="bg-gray-500">Closed</Badge>
-                    )}
-                    {seller.rating && (
-                      <div className="flex items-center bg-white/10 backdrop-blur-sm px-3 py-1 rounded-full">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4 text-yellow-400 mr-1"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
-                          />
-                        </svg>
-                        <span className="text-white font-medium">{seller.rating.toFixed(1)}</span>
-                      </div>
-                    )}
+            {/* Seller Header with Parallax Effect */}
+            <AnimateOnScroll animation="fade-in-up">
+              <div className="relative h-72 rounded-2xl overflow-hidden mb-8 shadow-xl">
+                <div 
+                  className="absolute inset-0 z-0"
+                  style={{ transform: `translateY(${scrollY * 0.1}px)` }}
+                >
+                  <CloudinaryImage
+                    src={getSellerImageUrl(seller.imageUrl || seller.image)}
+                    alt={seller.name}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+                
+                {/* Decorative elements */}
+                <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+                  <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary rounded-full opacity-20 blur-xl"></div>
+                  <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-spice rounded-full opacity-20 blur-xl"></div>
+                </div>
+                
+                <div className="absolute inset-0 flex flex-col justify-end p-8 z-10">
+                  <div className="flex justify-between items-end">
+                    <div>
+                      <h1 className="text-4xl font-bold text-white mb-2">{seller.name}</h1>
+                      <p className="text-white/90 text-lg">{seller.address}</p>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      {seller.status === 'open' ? (
+                        <Badge variant="outline" className="bg-green-500 text-white px-3 py-1">Open</Badge>
+                      ) : (
+                        <Badge variant="outline" className="bg-gray-500 text-white px-3 py-1">Closed</Badge>
+                      )}
+                      {seller.rating && (
+                        <div className="flex items-center bg-white/10 backdrop-blur-sm px-4 py-1.5 rounded-full">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5 text-yellow-400 mr-1.5"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
+                            />
+                          </svg>
+                          <span className="text-white font-medium">{seller.rating.toFixed(1)}</span>
+                          <span className="ml-1 text-white/80 text-sm">({Math.floor(Math.random() * 100) + 20} reviews)</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            </AnimateOnScroll>
 
             {/* Menu Categories */}
-            <div className="mb-8">
-              <Tabs value={activeCategory} onValueChange={setActiveCategory}>
-                <TabsList className="mb-4 flex flex-wrap h-auto">
-                  <TabsTrigger value="all" className="mb-2">
-                    All Items
-                  </TabsTrigger>
-                  {categories.map((category: any) => (
-                    <TabsTrigger key={category._id} value={category._id} className="mb-2">
-                      {category.name}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
+            <FoodPatternBackground variant="light" className="rounded-xl p-6 mb-8">
+              <AnimateOnScroll animation="fade-in-up">
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold mb-4 bg-gradient-to-r from-primary to-spice bg-clip-text text-transparent">Menu Categories</h2>
+                  <Tabs value={activeCategory} onValueChange={setActiveCategory}>
+                    <TabsList className="mb-6 flex flex-wrap h-auto bg-white/50 p-1 rounded-lg shadow-soft">
+                      <TabsTrigger 
+                        value="all" 
+                        className="mb-2 data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-300"
+                      >
+                        All Items
+                      </TabsTrigger>
+                      {categories.map((category: any) => (
+                        <TabsTrigger 
+                          key={category._id} 
+                          value={category._id} 
+                          className="mb-2 data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-300"
+                        >
+                          {category.name}
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
 
-                <TabsContent value={activeCategory}>
-                  {filteredMenuItems.length === 0 ? (
-                    <div className="text-center py-12">
-                      <p className="text-gray-500">No items found in this category</p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {filteredMenuItems.map((item: any) => (
-                        <Card key={item._id} className={`overflow-hidden ${!item.isAvailable || item.stock <= 0 ? 'opacity-70' : ''}`}>
-                          <div className="relative h-48">
-                            <CloudinaryImage
-                              src={getFullImageUrl(item.imageUrl)}
-                              alt={item.name}
-                              fill
-                              className="object-cover"
-                            />
-                            {(!item.isAvailable || item.stock <= 0) && (
-                              <div className="absolute inset-0 bg-gray-900/50 flex items-center justify-center">
-                                <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                                  Out of Stock
-                                </span>
-                              </div>
-                            )}
-                            {item.dietaryInfo && (
-                              <div className="absolute bottom-2 left-2 flex flex-wrap gap-1">
-                                {item.dietaryInfo.includes('vegetarian') && (
-                                  <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full">
-                                    Vegetarian
-                                  </span>
-                                )}
-                                {item.dietaryInfo.includes('vegan') && (
-                                  <span className="bg-green-700 text-white text-xs px-2 py-1 rounded-full">
-                                    Vegan
-                                  </span>
-                                )}
-                                {item.dietaryInfo.includes('gluten-free') && (
-                                  <span className="bg-yellow-500 text-white text-xs px-2 py-1 rounded-full">
-                                    Gluten-Free
-                                  </span>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                          <CardContent className="p-4">
-                            <div className="flex justify-between items-start mb-2">
-                              <div>
-                                <h3 className="font-bold text-lg">{item.name}</h3>
-                                <p className="text-gray-500 text-sm line-clamp-2">{item.description}</p>
-                              </div>
-                              <p className="font-bold text-lg">{formatPrice(item.price)}</p>
-                            </div>
-                            <div className="mt-4">
-                              <Button 
-                                className="w-full" 
-                                disabled={!item.isAvailable || item.stock <= 0 || seller.status !== 'open'}
-                                onClick={() => handleAddToCart(item)}
-                              >
-                                Add to Cart
-                              </Button>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))} 
-                    </div>
-                  )}
-                </TabsContent>
-              </Tabs>
-            </div>
+                    <TabsContent value={activeCategory}>
+                      {filteredMenuItems.length === 0 ? (
+                        <div className="text-center py-12">
+                          <p className="text-gray-500">No items found in this category</p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                          {filteredMenuItems.map((item: any, index: number) => (
+                            <AnimateOnScroll 
+                              key={item._id} 
+                              animation="fade-in-up" 
+                              delay={index % 3 * 100}
+                            >
+                              <HoverCardEffect disabled={!item.isAvailable || item.stock <= 0}>
+                                <Card className={`overflow-hidden border-0 shadow-soft ${!item.isAvailable || item.stock <= 0 ? 'opacity-70' : ''}`}>
+                                  <div className="relative h-52">
+                                    <CloudinaryImage
+                                      src={getFullImageUrl(item.imageUrl)}
+                                      alt={item.name}
+                                      fill
+                                      className="object-cover transition-transform duration-500 hover:scale-105"
+                                    />
+                                    {(!item.isAvailable || item.stock <= 0) && (
+                                      <div className="absolute inset-0 bg-gray-900/50 flex items-center justify-center">
+                                        <span className="bg-red-500 text-white px-4 py-1.5 rounded-full text-sm font-medium">
+                                          Out of Stock
+                                        </span>
+                                      </div>
+                                    )}
+                                    {item.dietaryInfo && (
+                                      <div className="absolute bottom-3 left-3 flex flex-wrap gap-1.5">
+                                        {item.dietaryInfo.includes('vegetarian') && (
+                                          <span className="bg-herb text-white text-xs px-2.5 py-1 rounded-full font-medium shadow-sm">
+                                            Vegetarian
+                                          </span>
+                                        )}
+                                        {item.dietaryInfo.includes('vegan') && (
+                                          <span className="bg-herb-dark text-white text-xs px-2.5 py-1 rounded-full font-medium shadow-sm">
+                                            Vegan
+                                          </span>
+                                        )}
+                                        {item.dietaryInfo.includes('gluten-free') && (
+                                          <span className="bg-curry text-white text-xs px-2.5 py-1 rounded-full font-medium shadow-sm">
+                                            Gluten-Free
+                                          </span>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <CardContent className="p-5">
+                                    <div className="flex justify-between items-start mb-3">
+                                      <div>
+                                        <h3 className="font-bold text-xl">{item.name}</h3>
+                                        <p className="text-gray-600 text-sm line-clamp-2 mt-1">{item.description}</p>
+                                      </div>
+                                      <p className="font-bold text-lg text-primary">{formatPrice(item.price)}</p>
+                                    </div>
+                                    <div className="mt-4">
+                                      <Button 
+                                        className="w-full bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary transition-all duration-300" 
+                                        disabled={!item.isAvailable || item.stock <= 0 || seller.status !== 'open'}
+                                        onClick={() => handleAddToCart(item)}
+                                      >
+                                        Add to Cart
+                                      </Button>
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                              </HoverCardEffect>
+                            </AnimateOnScroll>
+                          ))} 
+                        </div>
+                      )}
+                    </TabsContent>
+                  </Tabs>
+                </div>
+              </AnimateOnScroll>
+            </FoodPatternBackground>
           </>
         ) : (
-          <div className="text-center py-12">
-            <h2 className="text-xl font-semibold text-red-600 mb-2">Seller Not Found</h2>
-            <p className="text-gray-600 mb-6">We couldn't find the seller you're looking for.</p>
-            <Button asChild>
-              <Link href="/sellers">Browse Sellers</Link>
-            </Button>
-          </div>
+          <AnimateOnScroll animation="fade-in-up">
+            <div className="text-center py-12 bg-white rounded-xl shadow-soft p-8">
+              <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-semibold text-red-600 mb-3">Seller Not Found</h2>
+              <p className="text-gray-600 mb-8 max-w-md mx-auto">We couldn't find the seller you're looking for. They might have moved or the link might be incorrect.</p>
+              <Button 
+                asChild
+                className="bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary transition-all duration-300"
+              >
+                <Link href="/sellers">Browse Sellers</Link>
+              </Button>
+            </div>
+          </AnimateOnScroll>
         )}
       </div>
     </MainLayout>

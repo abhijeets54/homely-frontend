@@ -25,7 +25,6 @@ const registerSchema = z.object({
   phoneNumber: z.string().min(10, 'Please enter a valid phone number').max(15, 'Phone number is too long'),
   address: z.string().min(5, 'Please enter your complete address'),
   role: z.enum(['customer', 'seller'] as const),
-  imageUrl: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ['confirmPassword'],
@@ -240,21 +239,6 @@ export function RegisterForm() {
           <p className="text-sm text-red-500">{errors.address.message}</p>
         )}
       </div>
-
-      {selectedRole === 'seller' && (
-        <div className="space-y-2">
-          <Label htmlFor="imageUrl">Restaurant Cover Image</Label>
-          <Input
-            id="imageUrl"
-            placeholder="Enter image filename (e.g. restaurant.jpg)"
-            disabled={isLoading}
-            {...register('imageUrl')}
-          />
-          <p className="text-xs text-muted-foreground">
-            Enter just the filename. The image should be in the uploads/seller folder.
-          </p>
-        </div>
-      )}
 
       <Button className="w-full" type="submit" disabled={isLoading}>
         {isLoading ? (

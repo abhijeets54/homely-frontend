@@ -9,12 +9,16 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { formatPrice } from '@/lib/utils/format';
 import { CheckCircle } from 'lucide-react';
 import { useAuth } from '@/providers/auth-provider';
+import { useCart } from '@/components/providers/cart-provider';
+import { useQueryClient } from '@tanstack/react-query';
+import { UserRole } from '@/lib/types/auth';
 
 export default function CheckoutSuccessPage() {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
   const [countdown, setCountdown] = useState(5);
+  const queryClient = useQueryClient();
   
   const orderId = searchParams.get('orderId') || 'Unknown';
   const total = searchParams.get('total') ? parseFloat(searchParams.get('total')!) : 0;
@@ -31,12 +35,21 @@ export default function CheckoutSuccessPage() {
     // Fallback based on user role
     if (user) {
       if (user.role === 'seller') return '/seller/dashboard';
-      if (user.role === 'delivery') return '/delivery/dashboard';
+      if (user.role === 'customer') return '/customer/dashboard';
     }
     return '/customer/dashboard';
   };
   
   const dashboardUrl = getDashboardUrl();
+  
+  // Revalidate cart data when the page loads
+  useEffect(() => {
+    // Force revalidation of cart data
+    if (isAuthenticated && user && user.role === ('customer' as UserRole)) {
+      // Invalidate React Query cache for cart
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
+    }
+  }, [isAuthenticated, user, queryClient]);
   
   // Auto-redirect to dashboard after countdown
   useEffect(() => {

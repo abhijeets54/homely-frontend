@@ -23,7 +23,7 @@ export default function HomePage() {
   });
 
   // Take only the first 4 sellers for the featured section
-  const featuredSellers = sellers.slice(0, 4);
+  const featuredSellers = sellers.slice(0, 5);
 
   return (
     <MainLayout>

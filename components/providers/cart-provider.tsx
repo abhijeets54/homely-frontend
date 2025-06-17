@@ -201,14 +201,22 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       
       // Handle backend cart update for authenticated users
       setIsLoading(true);
-      const updatedCart = await cartApi.updateCartItem(cartItemId, quantity);
-      // Use type assertion to handle any inconsistencies between Cart types
-      setServerCart(updatedCart as unknown as Cart);
+      try {
+        const updatedCart = await cartApi.updateCartItem(cartItemId, quantity);
+        // Use type assertion to handle any inconsistencies between Cart types
+        setServerCart(updatedCart as unknown as Cart);
+      } catch (error) {
+        console.error('Error updating cart item:', error);
+        toast.error('Failed to update item quantity');
+        
+        // Reload cart to ensure UI is in sync with server state
+        await loadServerCart();
+      } finally {
+        setIsLoading(false);
+      }
     } catch (error) {
-      console.error('Error updating cart item:', error);
+      console.error('Error in updateCartItem:', error);
       toast.error('Failed to update item quantity');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -235,15 +243,24 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }
       
       // Handle backend cart removal for authenticated users
-      const updatedCart = await cartApi.removeFromCart(cartItemId);
-      // Use type assertion to handle any inconsistencies between Cart types
-      setServerCart(updatedCart as unknown as Cart);
-      toast.success('Item removed from cart');
+      try {
+        const updatedCart = await cartApi.removeFromCart(cartItemId);
+        // Use type assertion to handle any inconsistencies between Cart types
+        setServerCart(updatedCart as unknown as Cart);
+        toast.success('Item removed from cart');
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to remove item from cart';
+        toast.error(message);
+        console.error('Failed to remove from cart:', error);
+        
+        // Reload cart to ensure UI is in sync with server state
+        await loadServerCart();
+      } finally {
+        setIsLoading(false);
+      }
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to remove item from cart';
-      toast.error(message);
-      console.error('Failed to remove from cart:', error);
-    } finally {
+      console.error('Error in removeFromCart:', error);
+      toast.error('Failed to remove item from cart');
       setIsLoading(false);
     }
   };

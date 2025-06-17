@@ -81,12 +81,6 @@ export function Header() {
               >
                 Dashboard
               </Link>
-              <Link 
-                href="/customer/orders" 
-                className={`nav-link ${isActive('/customer/orders') ? 'nav-link-active' : ''}`}
-              >
-                Orders
-              </Link>
             </>
           )}
           {isAuthenticated && role === 'seller' && (
@@ -102,12 +96,6 @@ export function Header() {
                 className={`nav-link ${isActive('/seller/menu') ? 'nav-link-active' : ''}`}
               >
                 Menu
-              </Link>
-              <Link 
-                href="/seller/orders" 
-                className={`nav-link ${isActive('/seller/orders') ? 'nav-link-active' : ''}`}
-              >
-                Orders
               </Link>
             </>
           )}
@@ -151,9 +139,6 @@ export function Header() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href={`/${role}/profile`}>Profile</Link>
-                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href={`/${role}/dashboard`}>Dashboard</Link>
                 </DropdownMenuItem>

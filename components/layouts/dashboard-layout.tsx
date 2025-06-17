@@ -20,12 +20,11 @@ interface NavItem {
   icon: keyof typeof Icons;
 }
 
+interface NavProps {
+  items: NavItem[];
+}
+
 const customerNavItems: NavItem[] = [
-  {
-    title: 'Orders',
-    href: '/customer/orders',
-    icon: 'order',
-  },
   {
     title: 'Favorites',
     href: '/customer/favorites',
@@ -35,11 +34,6 @@ const customerNavItems: NavItem[] = [
     title: 'Addresses',
     href: '/customer/addresses',
     icon: 'mapPin',
-  },
-  {
-    title: 'Profile',
-    href: '/customer/profile',
-    icon: 'user',
   },
   {
     title: 'Settings',
@@ -60,19 +54,9 @@ const sellerNavItems: NavItem[] = [
     icon: 'menu',
   },
   {
-    title: 'Orders',
-    href: '/seller/orders',
-    icon: 'order',
-  },
-  {
     title: 'Analytics',
     href: '/seller/analytics',
     icon: 'analytics',
-  },
-  {
-    title: 'Profile',
-    href: '/seller/profile',
-    icon: 'user',
   },
   {
     title: 'Settings',
@@ -125,8 +109,39 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   );
 }
 
-interface NavProps {
-  items: NavItem[];
+interface MobileNavProps extends NavProps {
+  setOpen: (open: boolean) => void;
+}
+
+function MobileNav({ items, setOpen }: MobileNavProps) {
+  return (
+    <div className="flex flex-col gap-6 p-6">
+      <Link
+        href="/"
+        className="flex items-center gap-2"
+        onClick={() => setOpen(false)}
+      >
+        <Icons.logo className="h-6 w-6" />
+        <span className="font-bold">Homely</span>
+      </Link>
+      <div className="flex flex-col gap-2">
+        {items.map((item) => {
+          const Icon = Icons[item.icon];
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="flex items-center gap-2 text-sm"
+              onClick={() => setOpen(false)}
+            >
+              <Icon className="h-4 w-4" />
+              <span>{item.title}</span>
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 function Nav({ items }: NavProps) {
@@ -154,61 +169,20 @@ function Nav({ items }: NavProps) {
   );
 }
 
-interface MobileNavProps {
-  items: NavItem[];
-  setOpen: (open: boolean) => void;
-}
-
-function MobileNav({ items, setOpen }: MobileNavProps) {
-  const pathname = usePathname();
-
-  return (
-    <nav className="grid gap-2 p-4">
-      {items.map((item) => {
-        const Icon = Icons[item.icon];
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={() => setOpen(false)}
-            className={cn(
-              'group flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground',
-              pathname === item.href ? 'bg-accent' : 'transparent'
-            )}
-          >
-            <Icon className="mr-2 h-4 w-4" />
-            <span>{item.title}</span>
-          </Link>
-        );
-      })}
-    </nav>
-  );
-}
-
 function UserNav() {
-  const { user, logout } = useAuth();
-
   return (
     <div className="flex items-center gap-4">
-      <Button
-        variant="ghost"
-        size="icon"
-        className="relative"
-        aria-label="Notifications"
-      >
+      <Button variant="ghost" size="icon">
         <Icons.bell className="h-5 w-5" />
-        <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
-          3
-        </span>
+        <span className="sr-only">Notifications</span>
       </Button>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="gap-2"
-        onClick={() => logout()}
-      >
-        <Icons.logout className="h-4 w-4" />
-        <span>Logout</span>
+      <Button variant="ghost" size="icon">
+        <Icons.settings className="h-5 w-5" />
+        <span className="sr-only">Settings</span>
+      </Button>
+      <Button variant="ghost" size="icon">
+        <Icons.user className="h-5 w-5" />
+        <span className="sr-only">Account</span>
       </Button>
     </div>
   );

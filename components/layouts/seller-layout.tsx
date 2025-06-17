@@ -13,12 +13,10 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   ChefHat,
-  ClipboardList,
   Home,
   Menu as MenuIcon,
   Settings,
   Store,
-  User,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -34,16 +32,6 @@ const sidebarItems = [
     title: 'Menu Management',
     href: '/seller/menu',
     icon: MenuIcon,
-  },
-  {
-    title: 'Orders',
-    href: '/seller/orders',
-    icon: ClipboardList,
-  },
-  {
-    title: 'Profile',
-    href: '/seller/profile',
-    icon: User,
   },
   {
     title: 'Store Settings',
@@ -114,10 +102,10 @@ export function SellerLayout({ children }: { children: React.ReactNode }) {
           <SheetTrigger asChild>
             <Button
               variant="ghost"
-              className="lg:hidden fixed left-4 top-20 z-40"
+              className="lg:hidden fixed top-3 left-2 z-50"
               size="icon"
             >
-              <MenuIcon className="h-5 w-5" />
+              <MenuIcon className="h-6 w-6" />
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="w-64 p-0">

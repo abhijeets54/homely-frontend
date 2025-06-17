@@ -14,9 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Home,
   Menu as MenuIcon,
-  ShoppingBag,
   Heart,
-  User,
   Settings,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -30,19 +28,9 @@ const sidebarItems = [
     icon: Home,
   },
   {
-    title: 'Orders',
-    href: '/customer/orders',
-    icon: ShoppingBag,
-  },
-  {
     title: 'Favorites',
     href: '/customer/favorites',
     icon: Heart,
-  },
-  {
-    title: 'Profile',
-    href: '/customer/profile',
-    icon: User,
   },
   {
     title: 'Settings',
@@ -63,7 +51,7 @@ export function CustomerLayout({ children }: { children: React.ReactNode }) {
         <aside className="hidden lg:flex w-64 flex-col fixed inset-y-0 mt-16 border-r bg-white">
           <div className="flex-1 flex flex-col min-h-0 pt-5">
             <div className="flex items-center flex-shrink-0 px-4 mb-5">
-              <ShoppingBag className="h-6 w-6 text-primary mr-2" />
+              <Heart className="h-6 w-6 text-primary mr-2" />
               <span className="text-lg font-semibold">Customer Dashboard</span>
             </div>
             <nav className="flex-1 px-2 space-y-1">
@@ -93,19 +81,6 @@ export function CustomerLayout({ children }: { children: React.ReactNode }) {
               })}
             </nav>
           </div>
-          <div className="flex-shrink-0 flex border-t p-4">
-            <div className="flex items-center w-full">
-              <User className="h-8 w-8 text-gray-400 mr-3" />
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-gray-900 truncate">
-                  {user?.name}
-                </div>
-                <div className="text-sm text-gray-500 truncate">
-                  {user?.email}
-                </div>
-              </div>
-            </div>
-          </div>
         </aside>
 
         {/* Mobile sidebar */}
@@ -113,16 +88,16 @@ export function CustomerLayout({ children }: { children: React.ReactNode }) {
           <SheetTrigger asChild>
             <Button
               variant="ghost"
-              className="lg:hidden fixed left-4 top-20 z-40"
               size="icon"
+              className="lg:hidden fixed top-3 left-2 z-50"
             >
-              <MenuIcon className="h-5 w-5" />
+              <MenuIcon className="h-6 w-6" />
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="w-64 p-0">
             <SheetHeader className="p-4 border-b">
               <SheetTitle className="flex items-center">
-                <ShoppingBag className="h-6 w-6 text-primary mr-2" />
+                <Heart className="h-6 w-6 text-primary mr-2" />
                 <span>Customer Dashboard</span>
               </SheetTitle>
             </SheetHeader>

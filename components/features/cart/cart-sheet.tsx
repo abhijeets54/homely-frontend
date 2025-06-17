@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { useCart } from '@/providers/cart-provider';
+import { useCart } from '@/components/providers/cart-provider';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useToast } from '@/components/ui/use-toast';
@@ -11,14 +11,22 @@ import { CartItem } from './cart-item';
 
 export function CartSheet() {
   const pathname = usePathname();
-  const { isOpen, setIsOpen, items, getTotal } = useCart();
+  const [isOpen, setIsOpen] = useState(false);
+  const { cartItems, totalPrice, setOpenCartCallback } = useCart();
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
+
+  // Register the open cart callback when the component mounts
+  useEffect(() => {
+    setOpenCartCallback(() => {
+      setIsOpen(true);
+    });
+  }, [setOpenCartCallback]);
 
   // Close cart on route change
   useEffect(() => {
     setIsOpen(false);
-  }, [pathname, setIsOpen]);
+  }, [pathname]);
 
   const handleCheckout = () => {
     if (!isAuthenticated) {
@@ -40,23 +48,23 @@ export function CartSheet() {
         </SheetHeader>
         <div className="flex flex-col h-full">
           <div className="flex-1 overflow-y-auto py-4">
-            {items.length === 0 ? (
+            {cartItems.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-muted-foreground">Your cart is empty</p>
               </div>
             ) : (
               <div className="space-y-4">
-                {items.map((item) => (
-                  <CartItem key={item.id} item={item} />
+                {cartItems.map((item, index) => (
+                  <CartItem key={item.id || index} item={item as any} />
                 ))}
               </div>
             )}
           </div>
-          {items.length > 0 && (
+          {cartItems.length > 0 && (
             <div className="border-t pt-4">
               <div className="flex justify-between mb-4">
                   <span className="font-medium">Total</span>
-                <span className="font-medium">${getTotal().toFixed(2)}</span>
+                <span className="font-medium">${totalPrice.toFixed(2)}</span>
               </div>
               <Button
                 className="w-full"

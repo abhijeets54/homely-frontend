@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Minus, Plus, Trash } from 'lucide-react';
-import { useCart } from '@/providers/cart-provider';
+import { useCart } from '@/components/providers/cart-provider';
 import { CartItem as CartItemType } from '@/lib/types';
 
 interface CartItemProps {
@@ -11,7 +11,21 @@ interface CartItemProps {
 }
 
 export function CartItem({ item }: CartItemProps) {
-  const { updateQuantity, removeItem } = useCart();
+  const { updateCartItem, removeFromCart } = useCart();
+
+  const handleQuantityDecrease = () => {
+    if (item.quantity > 1) {
+      updateCartItem(item.id, item.quantity - 1);
+    }
+  };
+
+  const handleQuantityIncrease = () => {
+    updateCartItem(item.id, item.quantity + 1);
+  };
+
+  const handleRemoveItem = () => {
+    removeFromCart(item.id);
+  };
 
   return (
     <div className="flex items-center space-x-4">
@@ -34,7 +48,7 @@ export function CartItem({ item }: CartItemProps) {
           variant="outline"
           size="icon"
           className="h-8 w-8"
-          onClick={() => updateQuantity(item.id, Math.max(0, item.quantity - 1))}
+          onClick={handleQuantityDecrease}
           disabled={item.quantity <= 1}
         >
           <Minus className="h-3 w-3" />
@@ -45,7 +59,7 @@ export function CartItem({ item }: CartItemProps) {
           variant="outline"
           size="icon"
           className="h-8 w-8"
-          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+          onClick={handleQuantityIncrease}
         >
           <Plus className="h-3 w-3" />
           <span className="sr-only">Add one item</span>
@@ -54,7 +68,7 @@ export function CartItem({ item }: CartItemProps) {
           variant="outline"
           size="icon"
           className="h-8 w-8"
-          onClick={() => removeItem(item.id)}
+          onClick={handleRemoveItem}
         >
           <Trash className="h-3 w-3" />
           <span className="sr-only">Remove item</span>

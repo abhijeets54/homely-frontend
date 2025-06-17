@@ -32,12 +32,6 @@ export function Navbar() {
                 >
                   Browse
                 </Link>
-                <Link
-                  href="/customer/orders"
-                  className="transition-colors hover:text-foreground/80 text-foreground/60"
-                >
-                  Orders
-                </Link>
               </>
             ) : role === 'seller' ? (
               <>
@@ -101,15 +95,17 @@ export function Navbar() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-56" align="end" forceMount>
-                    <DropdownMenuItem asChild>
-                      <Link
-                        href={`/${role}/profile`}
-                        className="flex items-center"
-                      >
-                        <User className="mr-2 h-4 w-4" />
-                        <span>Profile</span>
-                      </Link>
-                    </DropdownMenuItem>
+                    {role !== 'customer' && (
+                      <DropdownMenuItem asChild>
+                        <Link
+                          href={`/${role}/profile`}
+                          className="flex items-center"
+                        >
+                          <User className="mr-2 h-4 w-4" />
+                          <span>Profile</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem asChild>
                       <Link
                         href={`/${role}/notifications`}

@@ -413,27 +413,6 @@ export default function SellerProfilePage() {
             </div>
           </CardContent>
         </Card>
-
-        {/* Danger Zone */}
-        <Card className="mt-8 border-red-200">
-          <CardHeader>
-            <CardTitle className="text-red-600 flex items-center">
-              <AlertCircle className="h-5 w-5 mr-2" />
-              Danger Zone
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <h4 className="font-medium">Delete Account</h4>
-                <p className="text-sm text-muted-foreground">
-                  Permanently delete your account and all associated data
-                </p>
-              </div>
-              <Button variant="destructive">Delete Account</Button>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </MainLayout>
   );

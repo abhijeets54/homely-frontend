@@ -236,9 +236,10 @@ export default function SellerMenuPage() {
                     placeholder="Search..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+                    className="flex-grow"
                   />
                   <select
-                    className="border border-primary/30 rounded-md px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all"
+                    className="border border-primary/30 rounded-md px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all bg-white"
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
                   >

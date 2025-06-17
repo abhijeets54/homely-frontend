@@ -93,8 +93,8 @@ export default function SellerProfilePage() {
         description: profile.description || '',
         openingTime: profile.openingTime || '09:00',
         closingTime: profile.closingTime || '22:00',
-        minimumOrder: profile.minimumOrder || '10',
-        deliveryRadius: profile.deliveryRadius || '5',
+        minimumOrder: String(profile.minimumOrder || '10'),
+        deliveryRadius: String(profile.deliveryRadius || '5'),
         imageUrl: profile.imageUrl || '',
       });
     }
@@ -181,8 +181,6 @@ export default function SellerProfilePage() {
         <Tabs defaultValue="profile" className="space-y-8">
           <TabsList>
             <TabsTrigger value="profile">Profile</TabsTrigger>
-            <TabsTrigger value="store">Store Settings</TabsTrigger>
-            <TabsTrigger value="photos">Photos</TabsTrigger>
           </TabsList>
 
           <TabsContent value="profile">
@@ -368,96 +366,6 @@ export default function SellerProfilePage() {
                     </Button>
                   </form>
                 </Form>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="store">
-            <Card>
-              <CardHeader>
-                <CardTitle>Store Settings</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Store Status</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Control whether your store is open for orders
-                    </p>
-                  </div>
-                  <Switch />
-                </div>
-                <Separator />
-                <div className="grid gap-6 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label>Opening Time</Label>
-                    <Input type="time" value="09:00" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Closing Time</Label>
-                    <Input type="time" value="22:00" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Minimum Order Amount</Label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2">
-                        $
-                      </span>
-                      <Input className="pl-6" type="number" value="10" />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Delivery Radius</Label>
-                    <div className="relative">
-                      <Input type="number" value="5" />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                        km
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <Button>Save Settings</Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="photos">
-            <Card>
-              <CardHeader>
-                <CardTitle>Store Photos</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-6">
-                  <div>
-                    <Label>Store Banner</Label>
-                    <div className="mt-2 relative aspect-video overflow-hidden rounded-lg border">
-                      <div className="absolute inset-0 flex items-center justify-center bg-muted">
-                        <Camera className="h-10 w-10 text-muted-foreground" />
-                      </div>
-                      <Button
-                        variant="secondary"
-                        className="absolute bottom-4 right-4"
-                      >
-                        Change Banner
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label>Store Logo</Label>
-                    <div className="mt-2 relative h-40 w-40 overflow-hidden rounded-full border">
-                      <div className="absolute inset-0 flex items-center justify-center bg-muted">
-                        <Store className="h-10 w-10 text-muted-foreground" />
-                      </div>
-                      <Button
-                        variant="secondary"
-                        className="absolute bottom-4 left-1/2 -translate-x-1/2"
-                      >
-                        Change Logo
-                      </Button>
-                    </div>
-                  </div>
-                </div>
               </CardContent>
             </Card>
           </TabsContent>

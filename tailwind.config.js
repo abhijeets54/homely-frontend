@@ -70,14 +70,38 @@ module.exports = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        "slide-in-from-right-smooth": {
+          "0%": { transform: "translateX(100%)" },
+          "100%": { transform: "translateX(0)" },
+        },
+        "slide-out-to-right-smooth": {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(100%)" },
+        },
+        "fade-in-smooth": {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
+        },
+        "fade-out-smooth": {
+          "0%": { opacity: "1" },
+          "100%": { opacity: "0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "slide-in-right": "slide-in-from-right-smooth 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+        "slide-out-right": "slide-out-to-right-smooth 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+        "fade-in": "fade-in-smooth 0.3s ease-out",
+        "fade-out": "fade-out-smooth 0.2s ease-in",
       },
       boxShadow: {
         'card': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
         'card-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+        'sheet': '0 0 25px -5px rgba(0, 0, 0, 0.1), 0 0 10px -5px rgba(0, 0, 0, 0.04)',
+      },
+      transitionTimingFunction: {
+        'ease-spring': 'cubic-bezier(0.16, 1, 0.3, 1)',
       },
     },
   },

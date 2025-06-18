@@ -47,19 +47,6 @@ export const sellerApi = {
   },
 
   /**
-   * Delete seller account
-   */
-  deleteAccount: async (): Promise<void> => {
-    try {
-      console.log('Attempting to delete seller account');
-      await apiClient.delete('/api/seller/profile/delete');
-    } catch (error) {
-      console.error('Error deleting seller account:', error);
-      throw error;
-    }
-  },
-
-  /**
    * Update seller status (open/closed)
    */
   updateStatus: async (status: { status: 'open' | 'closed' }): Promise<Seller> => {

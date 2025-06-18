@@ -14,6 +14,7 @@ Homely is a comprehensive food delivery platform that connects customers with ho
 - **Reviews & Ratings**: Leave reviews and ratings for restaurants and food items
 - **Payment Options**: Multiple payment methods including COD, card payments, and UPI
 - **Refund Management**: Request refunds for completed orders with issues
+- **Nutrition Analysis**: Analyze nutritional content of dishes using AI and ask follow-up questions about dietary information
 
 ### Seller Features
 - **Restaurant Management**: Create and manage restaurant profile and status
@@ -230,6 +231,60 @@ This project uses Cloudinary for image storage and optimization. To set up Cloud
    ```
 
 4. Replace `your_cloud_name` with your Cloudinary cloud name and `your_upload_preset` with the name of the upload preset you created.
+
+## Nutrition Analysis and AI Integration
+
+Homely includes an advanced Nutrition Analysis feature powered by Google's Gemini AI. This feature allows users to:
+
+- View detailed nutritional information for any dish on the platform
+- Get AI-generated insights about calories, protein, carbs, fat, fiber, sugar, and sodium content
+- Ask follow-up questions about ingredients, allergens, dietary considerations, and more
+- Receive personalized recommendations based on nutritional preferences
+
+### Setting up Gemini AI Integration:
+
+1. Create a Google AI Studio account and obtain an API key from [ai.google.dev](https://ai.google.dev/)
+
+2. Add the API key to your environment variables:
+   ```
+   NEXT_PUBLIC_GEMINI_API_KEY=your_gemini_api_key
+   ```
+
+3. The Nutrition Analyzer uses the `gemini-2.0-flash` model for fast and efficient responses.
+
+### Features of the Nutrition Analyzer:
+
+- **Interactive UI**: A visually rich interface with animations and intuitive design
+- **Real-time Analysis**: Instant nutritional breakdown of selected dishes
+- **Conversational Interface**: Ask follow-up questions about dietary information
+- **Fallback Mechanism**: Uses simulated data when API is unavailable
+- **Visual Progress Bars**: See how a dish contributes to daily nutritional values
+- **Mobile Responsive**: Fully functional on all device sizes
+
+### Implementation:
+
+The feature is implemented as a React component in `components/features/nutrition/nutrition-analyzer.tsx` and can be embedded on any page in the application. It leverages Framer Motion for animations and the Shadcn UI component library for the interface.
+
+### Usage Example:
+
+```jsx
+import { NutritionAnalyzer } from '@/components/features/nutrition';
+
+export default function NutritionPage() {
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-6">Nutrition Analysis</h1>
+      <NutritionAnalyzer />
+    </div>
+  );
+}
+```
+
+### Screenshot:
+
+![Nutrition Analyzer](public/images/nutrition-analyzer.jpg)
+
+*Note: Replace the placeholder image path with an actual screenshot of the Nutrition Analyzer component in action.*
 
 ## Image Components
 

@@ -95,6 +95,9 @@ export function NutritionAnalyzer() {
         throw new Error('Food item or seller not found');
       }
 
+      console.log('API Key available:', !!process.env.NEXT_PUBLIC_GEMINI_API_KEY);
+      console.log('Using Gemini API to analyze nutrition for:', foodItem.name);
+
       // Always try to use the real API first
       try {
         const nutritionData = await analyzeFoodNutrition({

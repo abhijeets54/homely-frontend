@@ -184,8 +184,24 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Testimonials Section with Staggered Animation */}
+      {/* Nutrition and Recommendation Section */}
       <section className="py-16 bg-white">
+        <div className="container mx-auto px-4">
+          <AnimatedSection className="mb-10">
+            <h2 className="section-title">Nutrition and Recommendation</h2>
+            <p className="text-center text-gray-600 mt-2">
+              Discover the nutritional value of your favorite dishes
+            </p>
+          </AnimatedSection>
+          
+          <AnimatedSection className="max-w-3xl mx-auto">
+            <NutritionAnalyzer />
+          </AnimatedSection>
+        </div>
+      </section>
+
+      {/* Testimonials Section with Staggered Animation */}
+      <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
           <AnimatedSection className="mb-10">
             <h2 className="section-title">What Our Customers Say</h2>
@@ -300,22 +316,6 @@ export default function HomePage() {
               </motion.div>
             </AnimatedChild>
           </AnimatedStaggerContainer>
-        </div>
-      </section>
-
-      {/* Nutrition and Recommendation Section */}
-      <section className="py-16 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <AnimatedSection className="mb-10">
-            <h2 className="section-title">Nutrition and Recommendation</h2>
-            <p className="text-center text-gray-600 mt-2">
-              Discover the nutritional value of your favorite dishes
-            </p>
-          </AnimatedSection>
-          
-          <AnimatedSection className="max-w-3xl mx-auto">
-            <NutritionAnalyzer />
-          </AnimatedSection>
         </div>
       </section>
 

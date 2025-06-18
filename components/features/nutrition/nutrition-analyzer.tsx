@@ -199,59 +199,103 @@ export function NutritionAnalyzer() {
     if (!foodItem || !seller) return;
     
     try {
-      // In a production environment, this would use the Gemini API directly
-      // Here we're simulating the API response with a timeout
-      setTimeout(async () => {
+      // Actually call the Gemini API directly for follow-up questions
+      const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+      
+      if (apiKey) {
         try {
-          // This is where you would call Gemini API in production
-          // const response = await fetch('gemini API endpoint', {...})
+          // Set up the API request to Gemini
+          const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-goog-api-key': apiKey
+            },
+            body: JSON.stringify({
+              contents: [{
+                parts: [{
+                  text: `
+                    About dish: ${foodItem.name} from restaurant ${seller.name}
+                    Description: ${foodItem.description || 'No description available'}
+                    Nutritional info: 
+                    - Calories: ${nutritionInfo?.calories || 'Unknown'}
+                    - Protein: ${nutritionInfo?.protein || 'Unknown'}
+                    - Carbs: ${nutritionInfo?.carbs || 'Unknown'}
+                    - Fat: ${nutritionInfo?.fat || 'Unknown'}
+                    
+                    User question: ${newQuestion.question}
+                    
+                    Provide a helpful, accurate, and concise answer about this dish based on the information provided.
+                    Focus specifically on answering the question asked, and if you don't have specific information about this dish,
+                    acknowledge that and provide general information that might be helpful.
+                    Keep your answer under 150 words.
+                  `
+                }]
+              }],
+              generationConfig: {
+                temperature: 0.2,
+                topK: 40,
+                topP: 0.95,
+                maxOutputTokens: 200
+              }
+            })
+          });
           
-          // For now, we'll generate answers based on the question content
-          let answer = '';
-          const question = newQuestion.question.toLowerCase();
-          
-          if (question.includes('calorie') || question.includes('calories')) {
-            answer = `${foodItem.name} contains approximately ${nutritionInfo?.calories || '300-400 calories'} per serving. This can vary based on the exact recipe and portion size.`;
-          } else if (question.includes('protein')) {
-            answer = `${foodItem.name} provides approximately ${nutritionInfo?.protein || '15-25g of protein'} per serving, making it a good protein source.`;
-          } else if (question.includes('carb') || question.includes('carbohydrate')) {
-            answer = `${foodItem.name} contains approximately ${nutritionInfo?.carbs || '20-30g of carbs'} per serving. The carbohydrate content mainly comes from the ingredients like rice, flour, or vegetables in the dish.`;
-          } else if (question.includes('fat')) {
-            answer = `The fat content in ${foodItem.name} is approximately ${nutritionInfo?.fat || '10-18g'} per serving. This includes both saturated and unsaturated fats, with the exact ratio depending on the cooking methods and ingredients used.`;
-          } else if (question.includes('ingredient') || question.includes('made')) {
-            answer = `${foodItem.name} typically contains ${foodItem.description || 'various ingredients based on the restaurant\'s specific recipe'}. For the exact ingredients list, I recommend checking with ${seller.name} directly.`;
-          } else if (question.includes('healthy') || question.includes('nutrition')) {
-            answer = `${foodItem.name} provides a mix of macronutrients including protein (${nutritionInfo?.protein || '~20g'}), carbs (${nutritionInfo?.carbs || '~25g'}), and fats (${nutritionInfo?.fat || '~15g'}). To make it healthier, you could request less oil or butter in the preparation, or pair it with a vegetable side dish for added fiber and micronutrients.`;
-          } else if (question.includes('allergen') || question.includes('allergic')) {
-            answer = `Common allergens that might be present in ${foodItem.name} include dairy, nuts, gluten, or shellfish depending on the recipe. For specific allergen information, please ask ${seller.name} directly as recipes can vary.`;
-          } else if (question.includes('dietary') || question.includes('vegan') || question.includes('vegetarian')) {
-            answer = `You should check with ${seller.name} whether ${foodItem.name} meets specific dietary requirements like being vegetarian, vegan, gluten-free, etc. Many restaurants can modify dishes to accommodate dietary needs upon request.`;
-          } else {
-            answer = `Thank you for your question about ${foodItem.name}. To provide a more accurate answer about this specific dish as prepared by ${seller.name}, I'd recommend checking with the restaurant directly. They can provide the most up-to-date and accurate information about their preparation methods and ingredients.`;
+          if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
           }
           
-          // Update the question in the history with the answer
+          const data = await response.json();
+          const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          
+          // Update the question in history with the API response
           setFollowUpHistory(prev => 
             prev.map((item, idx) => 
               idx === prev.length - 1 
-                ? { ...item, answer, loading: false } 
+                ? { ...item, answer: generatedText.trim(), loading: false } 
                 : item
             )
           );
-        } catch (err) {
-          console.error('Error generating answer:', err);
-          setFollowUpHistory(prev => 
-            prev.map((item, idx) => 
-              idx === prev.length - 1 
-                ? { 
-                    ...item, 
-                    answer: "I'm sorry, I couldn't process your question. Please try again.", 
-                    loading: false 
-                  } 
-                : item
-            )
-          );
+          return;
+        } catch (apiError) {
+          console.error('Error calling Gemini API for follow-up:', apiError);
+          // Fall through to the mock data response
         }
+      }
+      
+      // If API call failed or no API key, use mock answers
+      setTimeout(() => {
+        let answer = '';
+        const question = newQuestion.question.toLowerCase();
+        
+        if (question.includes('calorie') || question.includes('calories')) {
+          answer = `${foodItem.name} contains approximately ${nutritionInfo?.calories || '300-400 calories'} per serving. This can vary based on the exact recipe and portion size.`;
+        } else if (question.includes('protein')) {
+          answer = `${foodItem.name} provides approximately ${nutritionInfo?.protein || '15-25g of protein'} per serving, making it a good protein source.`;
+        } else if (question.includes('carb') || question.includes('carbohydrate')) {
+          answer = `${foodItem.name} contains approximately ${nutritionInfo?.carbs || '20-30g of carbs'} per serving. The carbohydrate content mainly comes from the ingredients like rice, flour, or vegetables in the dish.`;
+        } else if (question.includes('fat')) {
+          answer = `The fat content in ${foodItem.name} is approximately ${nutritionInfo?.fat || '10-18g'} per serving. This includes both saturated and unsaturated fats, with the exact ratio depending on the cooking methods and ingredients used.`;
+        } else if (question.includes('ingredient') || question.includes('made')) {
+          answer = `${foodItem.name} typically contains ${foodItem.description || 'various ingredients based on the restaurant\'s specific recipe'}. For the exact ingredients list, I recommend checking with ${seller.name} directly.`;
+        } else if (question.includes('healthy') || question.includes('nutrition')) {
+          answer = `${foodItem.name} provides a mix of macronutrients including protein (${nutritionInfo?.protein || '~20g'}), carbs (${nutritionInfo?.carbs || '~25g'}), and fats (${nutritionInfo?.fat || '~15g'}). To make it healthier, you could request less oil or butter in the preparation, or pair it with a vegetable side dish for added fiber and micronutrients.`;
+        } else if (question.includes('allergen') || question.includes('allergic')) {
+          answer = `Common allergens that might be present in ${foodItem.name} include dairy, nuts, gluten, or shellfish depending on the recipe. For specific allergen information, please ask ${seller.name} directly as recipes can vary.`;
+        } else if (question.includes('dietary') || question.includes('vegan') || question.includes('vegetarian')) {
+          answer = `You should check with ${seller.name} whether ${foodItem.name} meets specific dietary requirements like being vegetarian, vegan, gluten-free, etc. Many restaurants can modify dishes to accommodate dietary needs upon request.`;
+        } else {
+          answer = `Thank you for your question about ${foodItem.name}. To provide a more accurate answer about this specific dish as prepared by ${seller.name}, I'd recommend checking with the restaurant directly. They can provide the most up-to-date and accurate information about their preparation methods and ingredients.`;
+        }
+        
+        // Update the question in history with the mock answer
+        setFollowUpHistory(prev => 
+          prev.map((item, idx) => 
+            idx === prev.length - 1 
+              ? { ...item, answer, loading: false } 
+              : item
+          )
+        );
       }, 1500);
     } catch (error) {
       console.error('Error processing follow-up question:', error);
@@ -402,8 +446,8 @@ export function NutritionAnalyzer() {
                 </div>
               </DialogHeader>
               
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex-1 flex flex-col overflow-hidden">
-                <div className="px-6 border-b">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex-1 flex flex-col">
+                <div className="px-6 border-b sticky top-0 bg-background z-10">
                   <TabsList className="w-full justify-start">
                     <TabsTrigger value="nutrition" className="text-base py-3 relative">
                       Nutrition Facts
@@ -431,248 +475,251 @@ export function NutritionAnalyzer() {
                   </TabsList>
                 </div>
                 
-                <div className="p-6 overflow-y-auto flex-1">
-                  <TabsContent value="nutrition" className="m-0 h-full">
-                    {isAnalyzing ? (
-                      <div className="flex flex-col items-center justify-center py-12">
-                        <div className="relative">
-                          <Icons.spinner className="h-12 w-12 animate-spin text-primary" />
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-xs font-semibold">AI</span>
-                          </div>
-                        </div>
-                        <p className="mt-4 text-lg font-medium">Analyzing nutritional content...</p>
-                        <p className="text-muted-foreground mt-2">This may take a few moments</p>
-                      </div>
-                    ) : nutritionInfo ? (
-                      <AnimatePresence>
-                        <motion.div
-                          variants={containerVariants}
-                          initial="hidden"
-                          animate="visible"
-                          className="space-y-8"
-                        >
-                          <motion.div 
-                            variants={itemVariants}
-                            className="bg-muted p-6 rounded-lg"
-                          >
-                            <h3 className="text-xl font-semibold mb-6 border-b pb-2">Nutrition Facts</h3>
-                            
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div className="space-y-4">
-                                <div className="flex justify-between py-2 border-b">
-                                  <span className="font-medium text-lg">Calories</span>
-                                  <span className="text-lg">{nutritionInfo.calories}</span>
-                                </div>
-                                <div className="flex justify-between py-2 border-b">
-                                  <span className="font-medium">Protein</span>
-                                  <span>{nutritionInfo.protein}</span>
-                                </div>
-                                <div className="flex justify-between py-2 border-b">
-                                  <span className="font-medium">Carbohydrates</span>
-                                  <span>{nutritionInfo.carbs}</span>
-                                </div>
-                                <div className="flex justify-between py-2 border-b">
-                                  <span className="font-medium">Fat</span>
-                                  <span>{nutritionInfo.fat}</span>
-                                </div>
-                              </div>
-                              <div className="space-y-4">
-                                <div className="flex justify-between py-2 border-b">
-                                  <span className="font-medium">Fiber</span>
-                                  <span>{nutritionInfo.fiber}</span>
-                                </div>
-                                <div className="flex justify-between py-2 border-b">
-                                  <span className="font-medium">Sugar</span>
-                                  <span>{nutritionInfo.sugar}</span>
-                                </div>
-                                <div className="flex justify-between py-2 border-b">
-                                  <span className="font-medium">Sodium</span>
-                                  <span>{nutritionInfo.sodium}</span>
-                                </div>
-                              </div>
+                <div className="overflow-y-auto flex-1" style={{ maxHeight: 'calc(85vh - 140px)' }}>
+                  <div className="p-6">
+                    <TabsContent value="nutrition" className="m-0">
+                      {isAnalyzing ? (
+                        <div className="flex flex-col items-center justify-center py-12">
+                          <div className="relative">
+                            <Icons.spinner className="h-12 w-12 animate-spin text-primary" />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <span className="text-xs font-semibold">AI</span>
                             </div>
-                          </motion.div>
-                          
-                          {nutritionInfo.additionalInfo && (
+                          </div>
+                          <p className="mt-4 text-lg font-medium">Analyzing nutritional content...</p>
+                          <p className="text-muted-foreground mt-2">This may take a few moments</p>
+                        </div>
+                      ) : nutritionInfo ? (
+                        <AnimatePresence>
+                          <motion.div
+                            variants={containerVariants}
+                            initial="hidden"
+                            animate="visible"
+                            className="space-y-8"
+                          >
                             <motion.div 
                               variants={itemVariants}
-                              className="bg-secondary/20 p-6 rounded-lg"
+                              className="bg-muted p-6 rounded-lg"
                             >
-                              <h4 className="font-medium mb-2 text-lg">Additional Insights</h4>
-                              <p className="text-muted-foreground">{nutritionInfo.additionalInfo}</p>
-                            </motion.div>
-                          )}
-                          
-                          <motion.div 
-                            variants={itemVariants}
-                            className="bg-muted/40 p-6 rounded-lg"
-                          >
-                            <h4 className="font-medium mb-3 text-lg">Dietary Information</h4>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                              <Badge variant="outline" className="justify-center py-1">
-                                {parseInt(nutritionInfo.calories) < 350 ? "Low Calorie" : "High Calorie"}
-                              </Badge>
-                              <Badge variant="outline" className="justify-center py-1">
-                                {parseInt(nutritionInfo.sodium) < 400 ? "Low Sodium" : "High Sodium"}
-                              </Badge>
-                              <Badge variant="outline" className="justify-center py-1">
-                                {parseInt(nutritionInfo.protein) > 15 ? "High Protein" : "Moderate Protein"}
-                              </Badge>
-                              <Badge variant="outline" className="justify-center py-1">
-                                {parseInt(nutritionInfo.fiber) > 4 ? "High Fiber" : "Low Fiber"}
-                              </Badge>
-                              <Badge variant="outline" className="justify-center py-1">
-                                {parseInt(nutritionInfo.sugar) < 5 ? "Low Sugar" : "Contains Sugar"}
-                              </Badge>
-                            </div>
-                          </motion.div>
-                          
-                          <motion.div 
-                            variants={itemVariants}
-                            className="bg-muted/30 p-6 rounded-lg"
-                          >
-                            <h4 className="font-medium mb-3 text-lg">Daily Value Percentage</h4>
-                            <p className="text-sm text-muted-foreground mb-4">
-                              Based on a 2,000 calorie diet
-                            </p>
-                            <div className="space-y-3">
-                              <div>
-                                <div className="flex justify-between mb-1">
-                                  <span>Calories</span>
-                                  <span>{Math.round((parseInt(nutritionInfo.calories) / 2000) * 100)}%</span>
-                                </div>
-                                <div className="w-full bg-muted rounded-full h-2.5">
-                                  <div 
-                                    className="bg-primary h-2.5 rounded-full" 
-                                    style={{ width: `${Math.min(Math.round((parseInt(nutritionInfo.calories) / 2000) * 100), 100)}%` }}
-                                  ></div>
-                                </div>
-                              </div>
-                              <div>
-                                <div className="flex justify-between mb-1">
-                                  <span>Protein</span>
-                                  <span>{Math.round((parseInt(nutritionInfo.protein) / 50) * 100)}%</span>
-                                </div>
-                                <div className="w-full bg-muted rounded-full h-2.5">
-                                  <div 
-                                    className="bg-blue-500 h-2.5 rounded-full" 
-                                    style={{ width: `${Math.min(Math.round((parseInt(nutritionInfo.protein) / 50) * 100), 100)}%` }}
-                                  ></div>
-                                </div>
-                              </div>
-                              <div>
-                                <div className="flex justify-between mb-1">
-                                  <span>Fat</span>
-                                  <span>{Math.round((parseInt(nutritionInfo.fat) / 65) * 100)}%</span>
-                                </div>
-                                <div className="w-full bg-muted rounded-full h-2.5">
-                                  <div 
-                                    className="bg-yellow-500 h-2.5 rounded-full" 
-                                    style={{ width: `${Math.min(Math.round((parseInt(nutritionInfo.fat) / 65) * 100), 100)}%` }}
-                                  ></div>
-                                </div>
-                              </div>
-                              <div>
-                                <div className="flex justify-between mb-1">
-                                  <span>Carbs</span>
-                                  <span>{Math.round((parseInt(nutritionInfo.carbs) / 300) * 100)}%</span>
-                                </div>
-                                <div className="w-full bg-muted rounded-full h-2.5">
-                                  <div 
-                                    className="bg-green-500 h-2.5 rounded-full" 
-                                    style={{ width: `${Math.min(Math.round((parseInt(nutritionInfo.carbs) / 300) * 100), 100)}%` }}
-                                  ></div>
-                                </div>
-                              </div>
-                            </div>
-                          </motion.div>
-                          
-                          <motion.div 
-                            variants={itemVariants}
-                            className="bg-muted/20 p-6 rounded-lg"
-                          >
-                            <h4 className="font-medium mb-2">Disclaimer</h4>
-                            <p className="text-sm text-muted-foreground">
-                              This nutritional information is generated by AI based on typical recipes and 
-                              may not reflect the exact nutritional content of the dish as prepared by the restaurant.
-                              For precise dietary information, please contact the restaurant directly.
-                            </p>
-                          </motion.div>
-                        </motion.div>
-                      </AnimatePresence>
-                    ) : (
-                      <div className="text-center text-muted-foreground py-12">
-                        <p>Select a dish and click "Check Nutritional Value" to see nutrition facts</p>
-                      </div>
-                    )}
-                  </TabsContent>
-                  
-                  <TabsContent value="questions" className="m-0 space-y-6 h-full">
-                    <div className="bg-muted/20 p-4 rounded-lg">
-                      <h3 className="text-lg font-medium mb-2">Ask about {selectedFoodItem?.name}</h3>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Have questions about ingredients, preparation, or dietary considerations? Ask here!
-                      </p>
-                      
-                      <form onSubmit={handleFollowUpSubmit} className="flex gap-2">
-                        <Input
-                          placeholder="Ask a follow-up question..."
-                          value={followUpQuestion}
-                          onChange={(e) => setFollowUpQuestion(e.target.value)}
-                          className="flex-1"
-                        />
-                        <Button 
-                          type="submit" 
-                          disabled={!followUpQuestion.trim()}
-                          className="bg-primary hover:bg-primary/90"
-                        >
-                          Ask
-                        </Button>
-                      </form>
-                    </div>
-                    
-                    {followUpHistory.length > 0 ? (
-                      <div className="space-y-4">
-                        <AnimatePresence>
-                          {followUpHistory.map((item, index) => (
-                            <motion.div
-                              key={index}
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ duration: 0.3 }}
-                              className="space-y-2"
-                            >
-                              <div className="bg-secondary/20 p-4 rounded-lg">
-                                <p className="font-medium">{item.question}</p>
-                              </div>
+                              <h3 className="text-xl font-semibold mb-6 border-b pb-2">Nutrition Facts</h3>
                               
-                              <div className="bg-muted p-4 rounded-lg">
-                                {item.loading ? (
-                                  <div className="flex items-center gap-2">
-                                    <Icons.spinner className="h-4 w-4 animate-spin" />
-                                    <p className="text-muted-foreground">Generating response...</p>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-4">
+                                  <div className="flex justify-between py-2 border-b">
+                                    <span className="font-medium text-lg">Calories</span>
+                                    <span className="text-lg">{nutritionInfo.calories}</span>
                                   </div>
-                                ) : (
-                                  <motion.p
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    transition={{ duration: 0.5 }}
-                                  >
-                                    {item.answer}
-                                  </motion.p>
-                                )}
+                                  <div className="flex justify-between py-2 border-b">
+                                    <span className="font-medium">Protein</span>
+                                    <span>{nutritionInfo.protein}</span>
+                                  </div>
+                                  <div className="flex justify-between py-2 border-b">
+                                    <span className="font-medium">Carbohydrates</span>
+                                    <span>{nutritionInfo.carbs}</span>
+                                  </div>
+                                  <div className="flex justify-between py-2 border-b">
+                                    <span className="font-medium">Fat</span>
+                                    <span>{nutritionInfo.fat}</span>
+                                  </div>
+                                </div>
+                                <div className="space-y-4">
+                                  <div className="flex justify-between py-2 border-b">
+                                    <span className="font-medium">Fiber</span>
+                                    <span>{nutritionInfo.fiber}</span>
+                                  </div>
+                                  <div className="flex justify-between py-2 border-b">
+                                    <span className="font-medium">Sugar</span>
+                                    <span>{nutritionInfo.sugar}</span>
+                                  </div>
+                                  <div className="flex justify-between py-2 border-b">
+                                    <span className="font-medium">Sodium</span>
+                                    <span>{nutritionInfo.sodium}</span>
+                                  </div>
+                                </div>
                               </div>
                             </motion.div>
-                          ))}
+                            
+                            {nutritionInfo.additionalInfo && (
+                              <motion.div 
+                                variants={itemVariants}
+                                className="bg-secondary/20 p-6 rounded-lg"
+                              >
+                                <h4 className="font-medium mb-2 text-lg">Additional Insights</h4>
+                                <p className="text-muted-foreground whitespace-normal">{nutritionInfo.additionalInfo}</p>
+                              </motion.div>
+                            )}
+                            
+                            <motion.div 
+                              variants={itemVariants}
+                              className="bg-muted/40 p-6 rounded-lg"
+                            >
+                              <h4 className="font-medium mb-3 text-lg">Dietary Information</h4>
+                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                <Badge variant="outline" className="justify-center py-1">
+                                  {parseInt(nutritionInfo.calories) < 350 ? "Low Calorie" : "High Calorie"}
+                                </Badge>
+                                <Badge variant="outline" className="justify-center py-1">
+                                  {parseInt(nutritionInfo.sodium) < 400 ? "Low Sodium" : "High Sodium"}
+                                </Badge>
+                                <Badge variant="outline" className="justify-center py-1">
+                                  {parseInt(nutritionInfo.protein) > 15 ? "High Protein" : "Moderate Protein"}
+                                </Badge>
+                                <Badge variant="outline" className="justify-center py-1">
+                                  {parseInt(nutritionInfo.fiber) > 4 ? "High Fiber" : "Low Fiber"}
+                                </Badge>
+                                <Badge variant="outline" className="justify-center py-1">
+                                  {parseInt(nutritionInfo.sugar) < 5 ? "Low Sugar" : "Contains Sugar"}
+                                </Badge>
+                              </div>
+                            </motion.div>
+                            
+                            <motion.div 
+                              variants={itemVariants}
+                              className="bg-muted/30 p-6 rounded-lg"
+                            >
+                              <h4 className="font-medium mb-3 text-lg">Daily Value Percentage</h4>
+                              <p className="text-sm text-muted-foreground mb-4">
+                                Based on a 2,000 calorie diet
+                              </p>
+                              <div className="space-y-3">
+                                <div>
+                                  <div className="flex justify-between mb-1">
+                                    <span>Calories</span>
+                                    <span>{Math.round((parseInt(nutritionInfo.calories) / 2000) * 100)}%</span>
+                                  </div>
+                                  <div className="w-full bg-muted rounded-full h-2.5">
+                                    <div 
+                                      className="bg-primary h-2.5 rounded-full" 
+                                      style={{ width: `${Math.min(Math.round((parseInt(nutritionInfo.calories) / 2000) * 100), 100)}%` }}
+                                    ></div>
+                                  </div>
+                                </div>
+                                <div>
+                                  <div className="flex justify-between mb-1">
+                                    <span>Protein</span>
+                                    <span>{Math.round((parseInt(nutritionInfo.protein) / 50) * 100)}%</span>
+                                  </div>
+                                  <div className="w-full bg-muted rounded-full h-2.5">
+                                    <div 
+                                      className="bg-blue-500 h-2.5 rounded-full" 
+                                      style={{ width: `${Math.min(Math.round((parseInt(nutritionInfo.protein) / 50) * 100), 100)}%` }}
+                                    ></div>
+                                  </div>
+                                </div>
+                                <div>
+                                  <div className="flex justify-between mb-1">
+                                    <span>Fat</span>
+                                    <span>{Math.round((parseInt(nutritionInfo.fat) / 65) * 100)}%</span>
+                                  </div>
+                                  <div className="w-full bg-muted rounded-full h-2.5">
+                                    <div 
+                                      className="bg-yellow-500 h-2.5 rounded-full" 
+                                      style={{ width: `${Math.min(Math.round((parseInt(nutritionInfo.fat) / 65) * 100), 100)}%` }}
+                                    ></div>
+                                  </div>
+                                </div>
+                                <div>
+                                  <div className="flex justify-between mb-1">
+                                    <span>Carbs</span>
+                                    <span>{Math.round((parseInt(nutritionInfo.carbs) / 300) * 100)}%</span>
+                                  </div>
+                                  <div className="w-full bg-muted rounded-full h-2.5">
+                                    <div 
+                                      className="bg-green-500 h-2.5 rounded-full" 
+                                      style={{ width: `${Math.min(Math.round((parseInt(nutritionInfo.carbs) / 300) * 100), 100)}%` }}
+                                    ></div>
+                                  </div>
+                                </div>
+                              </div>
+                            </motion.div>
+                            
+                            <motion.div 
+                              variants={itemVariants}
+                              className="bg-muted/20 p-6 rounded-lg"
+                            >
+                              <h4 className="font-medium mb-2">Disclaimer</h4>
+                              <p className="text-sm text-muted-foreground">
+                                This nutritional information is generated by AI based on typical recipes and 
+                                may not reflect the exact nutritional content of the dish as prepared by the restaurant.
+                                For precise dietary information, please contact the restaurant directly.
+                              </p>
+                            </motion.div>
+                          </motion.div>
                         </AnimatePresence>
+                      ) : (
+                        <div className="text-center text-muted-foreground py-12">
+                          <p>Select a dish and click "Check Nutritional Value" to see nutrition facts</p>
+                        </div>
+                      )}
+                    </TabsContent>
+                    
+                    <TabsContent value="questions" className="m-0 space-y-6">
+                      <div className="bg-muted/20 p-4 rounded-lg">
+                        <h3 className="text-lg font-medium mb-2">Ask about {selectedFoodItem?.name}</h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Have questions about ingredients, preparation, or dietary considerations? Ask here!
+                        </p>
+                        
+                        <form onSubmit={handleFollowUpSubmit} className="flex gap-2">
+                          <Input
+                            placeholder="Ask a follow-up question..."
+                            value={followUpQuestion}
+                            onChange={(e) => setFollowUpQuestion(e.target.value)}
+                            className="flex-1"
+                          />
+                          <Button 
+                            type="submit" 
+                            disabled={!followUpQuestion.trim()}
+                            className="bg-primary hover:bg-primary/90"
+                          >
+                            Ask
+                          </Button>
+                        </form>
                       </div>
-                    ) : (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <p>No questions yet. Ask your first question above!</p>
-                      </div>
-                    )}
-                  </TabsContent>
+                      
+                      {followUpHistory.length > 0 ? (
+                        <div className="space-y-4">
+                          <AnimatePresence>
+                            {followUpHistory.map((item, index) => (
+                              <motion.div
+                                key={index}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.3 }}
+                                className="space-y-2"
+                              >
+                                <div className="bg-secondary/20 p-4 rounded-lg">
+                                  <p className="font-medium">{item.question}</p>
+                                </div>
+                                
+                                <div className="bg-muted p-4 rounded-lg">
+                                  {item.loading ? (
+                                    <div className="flex items-center gap-2">
+                                      <Icons.spinner className="h-4 w-4 animate-spin" />
+                                      <p className="text-muted-foreground">Generating response...</p>
+                                    </div>
+                                  ) : (
+                                    <motion.p
+                                      initial={{ opacity: 0 }}
+                                      animate={{ opacity: 1 }}
+                                      transition={{ duration: 0.5 }}
+                                      className="whitespace-normal"
+                                    >
+                                      {item.answer}
+                                    </motion.p>
+                                  )}
+                                </div>
+                              </motion.div>
+                            ))}
+                          </AnimatePresence>
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <p>No questions yet. Ask your first question above!</p>
+                        </div>
+                      )}
+                    </TabsContent>
+                  </div>
                 </div>
               </Tabs>
             </motion.div>

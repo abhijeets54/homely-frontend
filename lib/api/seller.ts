@@ -51,7 +51,8 @@ export const sellerApi = {
    */
   deleteAccount: async (): Promise<void> => {
     try {
-      await apiClient.delete('/api/seller/account');
+      console.log('Attempting to delete seller account');
+      await apiClient.delete('/api/seller/profile/delete');
     } catch (error) {
       console.error('Error deleting seller account:', error);
       throw error;

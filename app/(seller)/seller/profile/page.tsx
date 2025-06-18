@@ -165,7 +165,15 @@ export default function SellerProfilePage() {
   // Delete account mutation
   const deleteAccountMutation = useMutation({
     mutationFn: withLoading(async () => {
-      return await sellerApi.deleteAccount();
+      console.log('Starting account deletion process');
+      try {
+        const response = await sellerApi.deleteAccount();
+        console.log('Account deletion API response:', response);
+        return response;
+      } catch (error: any) {
+        console.error('Account deletion API error:', error.response?.data || error.message);
+        throw error;
+      }
     }),
     onSuccess: () => {
       // Clear auth data from local storage
@@ -174,9 +182,10 @@ export default function SellerProfilePage() {
       // Redirect to home page
       router.push('/');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Delete account error:', error);
-      toast.error('Failed to delete your account. Please try again later.');
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to delete your account';
+      toast.error(`Failed to delete your account: ${errorMessage}`);
     },
   });
 

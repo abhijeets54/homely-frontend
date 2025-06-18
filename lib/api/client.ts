@@ -43,6 +43,15 @@ apiClient.interceptors.request.use(
       console.warn('No auth token available for request to:', config.url);
     }
     
+    // Special handling for DELETE requests
+    if (config.method === 'delete') {
+      console.log('DELETE request detected - ensuring proper headers and auth');
+      // Make sure the Authorization header is set
+      if (!config.headers.Authorization && token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    }
+    
     // Log the request details
     console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`, {
       headers: config.headers,

@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { sellerApi } from '@/lib/api';
 import { MainLayout } from '@/components/layouts';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
@@ -27,12 +27,25 @@ import {
   Mail,
   Camera,
   AlertCircle,
+  Trash2,
 } from 'lucide-react';
 import Image from 'next/image';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import CloudinaryImage from '@/components/CloudinaryImage';
 import ImageUploader from '@/components/ImageUploader';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { clearLocalAuthData } from '@/lib/api/auth';
 
 // Form schema
 const profileSchema = z.object({
@@ -55,6 +68,8 @@ export default function SellerProfilePage() {
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const queryClient = useQueryClient();
   const { withLoading } = useLoadingState();
+  const [confirmDeleteText, setConfirmDeleteText] = React.useState('');
+  const [isDeleteButtonDisabled, setIsDeleteButtonDisabled] = React.useState(true);
 
   // Fetch seller profile
   const { 
@@ -147,10 +162,39 @@ export default function SellerProfilePage() {
     },
   });
 
+  // Delete account mutation
+  const deleteAccountMutation = useMutation({
+    mutationFn: withLoading(async () => {
+      return await sellerApi.deleteAccount();
+    }),
+    onSuccess: () => {
+      // Clear auth data from local storage
+      clearLocalAuthData();
+      toast.success('Your account has been deleted successfully');
+      // Redirect to home page
+      router.push('/');
+    },
+    onError: (error) => {
+      console.error('Delete account error:', error);
+      toast.error('Failed to delete your account. Please try again later.');
+    },
+  });
+
   // Handle form submission
   const handleSubmit = (data: ProfileFormValues) => {
     console.log('Form submitted with data:', data);
     updateProfileMutation.mutate(data);
+  };
+
+  // Handle delete confirmation text change
+  const handleDeleteConfirmTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setConfirmDeleteText(e.target.value);
+    setIsDeleteButtonDisabled(e.target.value !== 'DELETE');
+  };
+
+  // Handle account deletion
+  const handleDeleteAccount = () => {
+    deleteAccountMutation.mutate();
   };
 
   // Loading state
@@ -414,6 +458,68 @@ export default function SellerProfilePage() {
                 </div>
               </div>
             </div>
+          </CardContent>
+        </Card>
+        
+        {/* Delete Account Section */}
+        <Card className="mt-8 border-red-200">
+          <CardHeader className="bg-red-50 rounded-t-lg">
+            <CardTitle className="text-red-600 flex items-center gap-2">
+              <Trash2 className="h-5 w-5" />
+              Delete Account
+            </CardTitle>
+            <CardDescription>
+              Permanently remove your account and all associated data
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="text-sm text-gray-600 mb-4">
+              <p className="mb-2">
+                <strong>Warning:</strong> This action cannot be undone. When you delete your account:
+              </p>
+              <ul className="list-disc list-inside space-y-1 ml-2">
+                <li>All your restaurant information will be permanently deleted</li>
+                <li>Your menu items and categories will be removed</li>
+                <li>You will no longer have access to order history</li>
+                <li>Customers will no longer be able to order from your restaurant</li>
+              </ul>
+            </div>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive">
+                  Delete Account
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. Your account and all data associated with it will be permanently deleted.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="my-4">
+                  <p className="text-sm font-medium mb-2">
+                    Type <span className="font-bold">DELETE</span> to confirm:
+                  </p>
+                  <Input
+                    className="border-red-300 focus:border-red-500"
+                    value={confirmDeleteText}
+                    onChange={handleDeleteConfirmTextChange}
+                    placeholder="Type DELETE to confirm"
+                  />
+                </div>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-red-600 hover:bg-red-700"
+                    onClick={handleDeleteAccount}
+                    disabled={isDeleteButtonDisabled || deleteAccountMutation.isPending}
+                  >
+                    {deleteAccountMutation.isPending ? 'Deleting...' : 'Yes, Delete My Account'}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </CardContent>
         </Card>
       </div>

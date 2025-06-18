@@ -61,6 +61,15 @@ const handleApiResponse = async (response: Response): Promise<any> => {
   }
 };
 
+// Helper function to clear local auth data
+export const clearLocalAuthData = (): void => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('userType');
+  localStorage.removeItem('user');
+  Cookies.remove('token', { path: '/' });
+  Cookies.remove('userType', { path: '/' });
+};
+
 // Auth API service
 export const authApi = {
   // Login user
@@ -168,6 +177,9 @@ export const authApi = {
     } catch (error: any) {
       console.error('Logout error:', error.response?.data || error.message);
       // We don't throw here because we want to clear local state even if the server call fails
+    } finally {
+      // Clear local storage and cookies
+      clearLocalAuthData();
     }
   }
 };

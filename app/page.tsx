@@ -16,6 +16,7 @@ import { motion } from 'framer-motion';
 import { AnimatedSection, AnimatedStaggerContainer, AnimatedChild } from '@/components/ui/animated-section';
 import { fadeIn, slideIn } from '@/lib/utils/animations';
 import { HeroSection } from '@/components/ui/hero-section';
+import { NutritionAnalyzer } from '@/components/features/nutrition';
 
 export default function HomePage() {
   // Fetch featured sellers
@@ -299,6 +300,22 @@ export default function HomePage() {
               </motion.div>
             </AnimatedChild>
           </AnimatedStaggerContainer>
+        </div>
+      </section>
+
+      {/* Nutrition and Recommendation Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <AnimatedSection className="mb-10">
+            <h2 className="section-title">Nutrition and Recommendation</h2>
+            <p className="text-center text-gray-600 mt-2">
+              Discover the nutritional value of your favorite dishes
+            </p>
+          </AnimatedSection>
+          
+          <AnimatedSection className="max-w-3xl mx-auto">
+            <NutritionAnalyzer />
+          </AnimatedSection>
         </div>
       </section>
 

@@ -17,6 +17,7 @@ export * from './payment';
 export * from './review';
 export * from './orders';
 export * from './notification';
+export * from './nutrition';
 
 // Re-export specific hooks or utilities
 import { useCart } from './cart';

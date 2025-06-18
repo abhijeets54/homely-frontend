@@ -1,0 +1,1 @@
+export { NutritionAnalyzer } from './nutrition-analyzer'; 

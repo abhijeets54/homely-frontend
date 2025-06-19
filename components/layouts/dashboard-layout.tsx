@@ -94,13 +94,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </Sheet>
         <div className="flex w-full items-center gap-4 lg:gap-8">
           <Link href="/" className="flex items-center space-x-2">
-            <Icons.logo className="h-8 w-8" />
             <Image 
-              src="/uploads/logo.png" 
+              src="https://res.cloudinary.com/dclkrotg8/image/upload/v1750333510/logo_z7h1hj.png" 
               alt="Homely" 
-              width={100} 
+              width={90} 
               height={30} 
-              className="h-8 w-auto"
+              className="h-auto"
             />
           </Link>
           <div className="flex-1" />
@@ -133,13 +132,12 @@ function MobileNav({ items, setOpen }: MobileNavProps) {
         className="flex items-center gap-2"
         onClick={() => setOpen(false)}
       >
-        <Icons.logo className="h-6 w-6" />
         <Image 
-          src="/uploads/logo.png" 
+          src="https://res.cloudinary.com/dclkrotg8/image/upload/v1750333510/logo_z7h1hj.png" 
           alt="Homely" 
-          width={100} 
-          height={30} 
-          className="h-6 w-auto"
+          width={80} 
+          height={27} 
+          className="h-auto"
         />
       </Link>
       <div className="flex flex-col gap-2">

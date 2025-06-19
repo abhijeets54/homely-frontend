@@ -13,11 +13,11 @@ export function Footer() {
           <div className="col-span-1 md:col-span-1">
             <Link href="/" className="flex items-center">
               <Image 
-                src="/uploads/logo.png" 
+                src="https://res.cloudinary.com/dclkrotg8/image/upload/v1750333510/logo_z7h1hj.png" 
                 alt="Homely" 
-                width={120} 
-                height={40} 
-                className="h-10 w-auto"
+                width={150} 
+                height={50} 
+                className="h-auto"
               />
             </Link>
             <p className="mt-4 text-gray-600 text-sm">
@@ -99,15 +99,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="mt-12 pt-8 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center">
           <p className="text-sm text-gray-600">
-            &copy; {currentYear} <span className="inline-flex items-center">
-              <Image 
-                src="/uploads/logo.png" 
-                alt="Homely" 
-                width={60} 
-                height={20} 
-                className="h-5 w-auto mr-1" 
-              />
-            </span>. All rights reserved.
+            &copy; {currentYear} Homely. All rights reserved.
           </p>
           <div className="flex space-x-4 mt-4 md:mt-0">
             <a href="#" className="text-gray-600 hover:text-primary">

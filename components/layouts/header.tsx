@@ -55,30 +55,30 @@ export function Header() {
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+      <div className="container mx-auto px-4 py-2 flex items-center justify-between">
         {/* Logo */}
         <LoadingLink href="/" className="flex items-center">
           <Image 
-            src="/uploads/logo.png" 
+            src="https://res.cloudinary.com/dclkrotg8/image/upload/v1750333510/logo_z7h1hj.png" 
             alt="Homely" 
-            width={120} 
-            height={40} 
-            className="h-10 w-auto"
+            width={90} 
+            height={30} 
+            className="h-auto"
             priority
           />
         </LoadingLink>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-8">
+        <nav className="hidden md:flex items-center space-x-6">
           <LoadingLink 
             href="/" 
-            className={`nav-link ${isActive('/') ? 'nav-link-active' : ''}`}
+            className={`nav-link text-base font-medium ${isActive('/') ? 'nav-link-active' : ''}`}
           >
             Home
           </LoadingLink>
           <LoadingLink 
             href="/sellers" 
-            className={`nav-link ${isActive('/sellers') ? 'nav-link-active' : ''}`}
+            className={`nav-link text-base font-medium ${isActive('/sellers') ? 'nav-link-active' : ''}`}
           >
             Sellers
           </LoadingLink>
@@ -86,7 +86,7 @@ export function Header() {
             <>
               <LoadingLink 
                 href="/customer/dashboard" 
-                className={`nav-link ${isActive('/customer/dashboard') ? 'nav-link-active' : ''}`}
+                className={`nav-link text-base font-medium ${isActive('/customer/dashboard') ? 'nav-link-active' : ''}`}
               >
                 Dashboard
               </LoadingLink>
@@ -96,13 +96,13 @@ export function Header() {
             <>
               <LoadingLink 
                 href="/seller/dashboard" 
-                className={`nav-link ${isActive('/seller/dashboard') ? 'nav-link-active' : ''}`}
+                className={`nav-link text-base font-medium ${isActive('/seller/dashboard') ? 'nav-link-active' : ''}`}
               >
                 Dashboard
               </LoadingLink>
               <LoadingLink 
                 href="/seller/menu" 
-                className={`nav-link ${isActive('/seller/menu') ? 'nav-link-active' : ''}`}
+                className={`nav-link text-base font-medium ${isActive('/seller/menu') ? 'nav-link-active' : ''}`}
               >
                 Menu
               </LoadingLink>
@@ -111,7 +111,7 @@ export function Header() {
         </nav>
 
         {/* Right side actions */}
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-3">
           {/* Cart (only for customers) */}
           {(!role || role === 'customer') && (
             <ImprovedCartSheet />
@@ -124,10 +124,10 @@ export function Header() {
             </div>
           ) : !isAuthenticated ? (
             <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm" asChild>
+              <Button variant="outline" size="default" asChild className="font-medium">
                 <LoadingLink href="/login">Login</LoadingLink>
               </Button>
-              <Button size="sm" asChild>
+              <Button size="default" asChild className="font-medium">
                 <LoadingLink href="/register">Register</LoadingLink>
               </Button>
             </div>

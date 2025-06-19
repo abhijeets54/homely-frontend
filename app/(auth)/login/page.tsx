@@ -50,12 +50,11 @@ export default function LoginPage() {
         >
           <Link href="/" className="flex items-center space-x-2">
             <Image 
-              src="/uploads/logo.png" 
+              src="https://res.cloudinary.com/dclkrotg8/image/upload/v1750333510/logo_z7h1hj.png" 
               alt="Homely" 
-              width={140} 
-              height={50} 
-              className="h-12 w-auto"
-              priority
+              width={180} 
+              height={60} 
+              className="h-auto"
             />
           </Link>
         </motion.div>

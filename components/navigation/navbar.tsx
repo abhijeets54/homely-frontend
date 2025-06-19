@@ -17,19 +17,18 @@ export function Navbar() {
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center">
-        <div className="mr-4 hidden md:flex">
-          <Link href="/" className="mr-6 flex items-center space-x-2">
+      <div className="container flex h-14 items-center">
+        <div className="mr-3 hidden md:flex">
+          <Link href="/" className="mr-4 flex items-center space-x-2">
             <Image 
-              src="/uploads/logo.png" 
+              src="https://res.cloudinary.com/dclkrotg8/image/upload/v1750333510/logo_z7h1hj.png" 
               alt="Homely" 
-              width={120} 
-              height={40} 
-              className="h-10 w-auto"
-              priority
+              width={80} 
+              height={27} 
+              className="h-auto"
             />
           </Link>
-          <div className="flex gap-6 text-sm">
+          <div className="flex gap-5 text-base font-medium">
             {role === 'customer' ? (
               <>
                 <Link

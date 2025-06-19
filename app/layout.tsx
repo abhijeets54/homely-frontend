@@ -14,9 +14,9 @@ export const metadata: Metadata = {
   title: 'Homely - Home-cooked Food Delivery',
   description: 'Order delicious home-cooked meals from local chefs in your area.',
   icons: {
-    icon: '/uploads/logo.png',
-    apple: '/uploads/logo.png',
-  },
+    icon: 'https://res.cloudinary.com/dclkrotg8/image/upload/v1750333510/logo_z7h1hj.png',
+    apple: 'https://res.cloudinary.com/dclkrotg8/image/upload/v1750333510/logo_z7h1hj.png',
+  }
 };
 
 export default function RootLayout({
@@ -27,7 +27,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/uploads/logo.png" />
+        <link rel="icon" href="https://res.cloudinary.com/dclkrotg8/image/upload/v1750333510/logo_z7h1hj.png" />
       </head>
       <body className={inter.className}>
         <ThemeProvider

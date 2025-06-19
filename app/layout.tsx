@@ -13,6 +13,10 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'Homely - Home-cooked Food Delivery',
   description: 'Order delicious home-cooked meals from local chefs in your area.',
+  icons: {
+    icon: '/uploads/logo.png',
+    apple: '/uploads/logo.png',
+  },
 };
 
 export default function RootLayout({
@@ -22,6 +26,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="/uploads/logo.png" />
+      </head>
       <body className={inter.className}>
         <ThemeProvider
           attribute="class"

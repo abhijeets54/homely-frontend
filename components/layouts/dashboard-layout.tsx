@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -94,7 +95,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="flex w-full items-center gap-4 lg:gap-8">
           <Link href="/" className="flex items-center space-x-2">
             <Icons.logo className="h-8 w-8" />
-            <span className="font-bold">Homely</span>
+            <Image 
+              src="/uploads/logo.png" 
+              alt="Homely" 
+              width={100} 
+              height={30} 
+              className="h-8 w-auto"
+            />
           </Link>
           <div className="flex-1" />
           <UserNav />
@@ -127,7 +134,13 @@ function MobileNav({ items, setOpen }: MobileNavProps) {
         onClick={() => setOpen(false)}
       >
         <Icons.logo className="h-6 w-6" />
-        <span className="font-bold">Homely</span>
+        <Image 
+          src="/uploads/logo.png" 
+          alt="Homely" 
+          width={100} 
+          height={30} 
+          className="h-6 w-auto"
+        />
       </Link>
       <div className="flex flex-col gap-2">
         {items.map((item) => {

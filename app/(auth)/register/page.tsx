@@ -16,10 +16,17 @@ export default function RegisterPage() {
         <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070&auto=format&fit=crop')" }} />
         <div className="absolute inset-0 bg-black/40" /> {/* Dark overlay for better text visibility */}
         
-        {/* Homely text in top left */}
+        {/* Homely logo in top left */}
         <div className="relative z-20 p-6">
           <Link href="/" className="flex items-center space-x-2">
-            <span className="text-2xl font-bold text-white">Homely</span>
+            <Image 
+              src="/uploads/logo.png" 
+              alt="Homely" 
+              width={140} 
+              height={50} 
+              className="h-12 w-auto"
+              priority
+            />
           </Link>
         </div>
       </div>

@@ -41,7 +41,7 @@ export default function LoginPage() {
           transition={{ duration: 1 }}
         /> 
         
-        {/* Animated Homely text in top left */}
+        {/* Animated Homely logo in top left */}
         <motion.div 
           className="relative z-20 p-6"
           initial={{ x: -50, opacity: 0 }}
@@ -49,7 +49,14 @@ export default function LoginPage() {
           transition={{ duration: 0.5, delay: 0.2 }}
         >
           <Link href="/" className="flex items-center space-x-2">
-            <span className="text-2xl font-bold text-white">Homely</span>
+            <Image 
+              src="/uploads/logo.png" 
+              alt="Homely" 
+              width={140} 
+              height={50} 
+              className="h-12 w-auto"
+              priority
+            />
           </Link>
         </motion.div>
 

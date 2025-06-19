@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/providers/auth-provider';
 import { useCart } from '@/components/providers/cart-provider';
@@ -57,7 +58,14 @@ export function Header() {
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         {/* Logo */}
         <LoadingLink href="/" className="flex items-center">
-          <span className="text-2xl font-bold text-primary">Homely</span>
+          <Image 
+            src="/uploads/logo.png" 
+            alt="Homely" 
+            width={120} 
+            height={40} 
+            className="h-10 w-auto"
+            priority
+          />
         </LoadingLink>
 
         {/* Desktop Navigation */}

@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -11,7 +12,13 @@ export function Footer() {
           {/* Logo and description */}
           <div className="col-span-1 md:col-span-1">
             <Link href="/" className="flex items-center">
-              <span className="text-2xl font-bold text-primary">Homely</span>
+              <Image 
+                src="/uploads/logo.png" 
+                alt="Homely" 
+                width={120} 
+                height={40} 
+                className="h-10 w-auto"
+              />
             </Link>
             <p className="mt-4 text-gray-600 text-sm">
               Delicious home-cooked meals delivered to your doorstep. Support local home chefs and enjoy authentic food.
@@ -92,7 +99,15 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="mt-12 pt-8 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center">
           <p className="text-sm text-gray-600">
-            &copy; {currentYear} Homely. All rights reserved.
+            &copy; {currentYear} <span className="inline-flex items-center">
+              <Image 
+                src="/uploads/logo.png" 
+                alt="Homely" 
+                width={60} 
+                height={20} 
+                className="h-5 w-auto mr-1" 
+              />
+            </span>. All rights reserved.
           </p>
           <div className="flex space-x-4 mt-4 md:mt-0">
             <a href="#" className="text-gray-600 hover:text-primary">

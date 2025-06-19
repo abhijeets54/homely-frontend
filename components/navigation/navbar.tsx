@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAuth } from '@/lib/context/auth-context';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,9 +20,14 @@ export function Navbar() {
       <div className="container flex h-16 items-center">
         <div className="mr-4 hidden md:flex">
           <Link href="/" className="mr-6 flex items-center space-x-2">
-            <span className="hidden font-bold sm:inline-block text-xl text-primary">
-              Homely
-            </span>
+            <Image 
+              src="/uploads/logo.png" 
+              alt="Homely" 
+              width={120} 
+              height={40} 
+              className="h-10 w-auto"
+              priority
+            />
           </Link>
           <div className="flex gap-6 text-sm">
             {role === 'customer' ? (

@@ -324,7 +324,16 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
             <AnimatedSection direction="left" className="text-center lg:text-left">
-              <h2 className="text-3xl font-bold mb-4">Ready to Experience Homely?</h2>
+              <div className="flex items-center justify-center lg:justify-start mb-4">
+                <Image 
+                  src="/uploads/logo.png" 
+                  alt="Homely" 
+                  width={100} 
+                  height={40} 
+                  className="h-10 w-auto mr-3"
+                />
+                <h2 className="text-3xl font-bold">Ready to Experience?</h2>
+              </div>
               <p className="text-lg mb-8">
                 Join thousands of satisfied customers enjoying delicious home-cooked meals delivered to their doorstep.
               </p>
